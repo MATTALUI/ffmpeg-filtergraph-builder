@@ -1,9 +1,13 @@
-import { invoke } from "@tauri-apps/api/core";
+import Toolbar from "./components/Toolbar.component";
 import "./App.css";
+import PanContainer from "./components/PanContainer.component";
 
 function App() {
   return (
-    <div></div>
+    <>
+      <Toolbar />
+      <PanContainer />
+    </>
   );
 }
 

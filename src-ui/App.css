@@ -1,7 +1,17 @@
-html, body, #root {
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #020024;
+  background: linear-gradient(176deg, rgba(2, 0, 36, 1) 0%, rgba(9, 9, 121, 1) 65%);
+  background: #1e2b22;
+  background: linear-gradient(167deg, rgba(30, 43, 34, 1) 0%, rgba(68, 148, 101, 1) 100%);
 }
