@@ -1,0 +1,15 @@
+.node {
+  position: absolute;
+  width: 200px;
+  aspect-ratio: 1;
+  background-color: #00000077;
+  border-radius: 0.25rem;
+  border: 2px solid transparent;
+  cursor: grab;
+  transition: color 250ms, border-color 250ms, background-color 250ms;
+
+  &:hover {
+    background-color: #00000088;
+    border-color: #696969;
+  }
+}

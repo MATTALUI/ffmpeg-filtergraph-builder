@@ -1,21 +1,25 @@
 import {
   type Component,
-  createSignal,
+  createSignal
 } from "solid-js";
-import Node from "./Node.component";
-import cn from "classnames";
-import styles from "./PanContainer.module.scss";
+import styles from "./Node.module.scss";
 
-const PanContainer: Component = () => {
+interface INodeProps {
+  initialX: number;
+  initialY: number;
+};
+
+const Node: Component<INodeProps> = (
+  props: INodeProps,
+) => {
+  const [x, setX] = createSignal(props.initialX);
+  const [y, setY] = createSignal(props.initialY);
   const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
     mouseX: 0,
     mouseY: 0,
     originalX: 0,
     originalY: 0,
   });
-  const [x, setX] = createSignal(0);
-  const [y, setY] = createSignal(0);
-  const [mouseIsDown, setMouseIsDown] = createSignal(false);
 
   const handleMouseMove = (event: MouseEvent) => {
     const initialValues = mouseDownValues();
@@ -28,13 +32,12 @@ const PanContainer: Component = () => {
   }
 
   const handleMouseUp = (event: MouseEvent) => {
-    setMouseIsDown(false);
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
   }
 
   const handleMouseDown = (event: MouseEvent) => {
-    setMouseIsDown(true);
+    event.stopImmediatePropagation();
     setMouseDownValues({
       mouseX: event.clientX,
       mouseY: event.clientY,
@@ -47,24 +50,16 @@ const PanContainer: Component = () => {
 
   return (
     <div
-      class={cn(
-        styles.panContainer,
-        mouseIsDown() && styles.grabbed,
-      )}
+      class={styles.node}
+      style={{
+        left: `${x()}px`,
+        top: `${y()}px`,
+      }}
       onMouseDown={handleMouseDown}
     >
-      <div
-        class={styles.pannable}
-        style={{
-          left: `${x()}px`,
-          top: `${y()}px`,
-        }}
-      >
-        <Node initialX={400} initialY={200} />
-        <Node initialX={800} initialY={500} />
-      </div>
+
     </div>
   );
 }
 
-export default PanContainer;
+export default Node;

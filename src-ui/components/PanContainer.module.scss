@@ -11,18 +11,3 @@
 .pannable {
     position: absolute;
 }
-
-.node {
-    position: absolute;
-    width: 200px;
-    aspect-ratio: 1;
-    background-color: #00000077;
-    border-radius: 0.25rem;
-    border: 1px solid transparent;
-    cursor: grab;
-
-    &:hover {
-        background-color: #00000088;
-        border-color: #FAFAFA;
-    }
-}
