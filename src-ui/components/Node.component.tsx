@@ -3,6 +3,7 @@ import {
   createSignal
 } from "solid-js";
 import styles from "./Node.module.scss";
+import cn from "classnames";
 
 interface INodeProps {
   initialX: number;
@@ -57,7 +58,13 @@ const Node: Component<INodeProps> = (
       }}
       onMouseDown={handleMouseDown}
     >
-
+      <div class={cn(styles.sockets, styles.inputs)}>
+        <div class={styles.socket}></div>
+        <div class={styles.socket}></div>
+      </div>
+      <div class={cn(styles.sockets, styles.outputs)}>
+        <div class={styles.socket}></div>
+      </div>
     </div>
   );
 }

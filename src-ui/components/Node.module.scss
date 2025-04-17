@@ -12,4 +12,38 @@
     background-color: #00000088;
     border-color: #696969;
   }
+
+  $socketSize: 1rem;
+
+  .sockets {
+    display: flex;
+    flex-direction: column;
+    gap: $socketSize / 2;
+    // background-color: pink;
+    height: 100%;
+    position: absolute;
+    justify-content: space-around;
+
+
+    &.inputs {
+      left: -$socketSize / 2;
+    }
+
+    &.outputs {
+      right: -$socketSize / 2;
+    }
+
+    .socket {
+      background-color: #f6fca9;
+      opacity: 0.25;
+      width: $socketSize;
+      aspect-ratio: 1;
+      border-radius: 100%;
+      transition: all 250ms;
+
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
 }
