@@ -10,6 +10,7 @@ import Node from "./Node.component";
 import cn from "classnames";
 import styles from "./PanContainer.module.scss";
 import { allNodes } from "../signals/nodes";
+import ConnectionManager from "./ConnectionManager.component";
 
 const PanContainer: Component = () => {
   const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
@@ -68,6 +69,7 @@ const PanContainer: Component = () => {
         <For each={Object.values(allNodes)}>
           {(node) => (<Node node={node} />)}
         </For>
+        <ConnectionManager />
       </div>
     </div>
   );

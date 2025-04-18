@@ -60,6 +60,7 @@ const Node: Component<INodeProps> = (
 
   return (
     <div
+      id={`node-${props.node.id}`}
       class={cn(styles.node, active() && styles.active)}
       style={{
         left: `${props.node.x}px`,
@@ -72,12 +73,16 @@ const Node: Component<INodeProps> = (
       </div>
       <div class={cn(styles.sockets, styles.inputs)}>
         <For each={props.node.inputs}>
-          {(_inputId) => (<div class={styles.socket}></div>)}
+          {(inputId) => (
+            <div class={cn(styles.socket, !!inputId && styles.connected)}/>
+          )}
         </For>
       </div>
       <div class={cn(styles.sockets, styles.outputs)}>
         <For each={props.node.outputs}>
-          {(_inputId) => (<div class={styles.socket}></div>)}
+          {(inputId) => (
+            <div class={cn(styles.socket, !!inputId && styles.connected)}/>
+          )}
         </For>
       </div>
     </div>

@@ -48,13 +48,13 @@ $socketSize: 1rem;
 
     .socket {
       background-color: #bdc182;
-      opacity: 0.25;
+      opacity: 0.69;
       width: $socketSize;
       aspect-ratio: 1;
       border-radius: 100%;
       transition: all 250ms;
 
-      &:hover {
+      &:hover, &.connected {
         opacity: 1;
       }
     }
