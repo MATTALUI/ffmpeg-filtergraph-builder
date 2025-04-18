@@ -42,17 +42,18 @@ const buildNodeConnectionSummary = (
   const nodeWithLeftestSocket = outputX <= inputX ? outputNode : inputNode;
   const nodeWithHighestSocket = outputY <= inputY ? outputNode : inputNode;
 
-  const x = Math.min(outputX, inputX);
-  const y = Math.min(outputY, inputY);
-  const width = Math.abs(outputX - inputX);
-  const height = Math.abs(outputY - inputY);
+  const padding = 10;
+  const x = Math.min(outputX, inputX) - padding;
+  const y = Math.min(outputY, inputY) - padding;
+  const width = Math.abs(outputX - inputX) + padding * 2;
+  const height = Math.abs(outputY - inputY) + padding * 2;
   const pathStrokeWidth = 3;
   let pathD = "M 0 0";
 
   if (nodeWithHighestSocket === nodeWithLeftestSocket) {
-    pathD = `M 0 ${pathStrokeWidth / 2} C ${width / 2} 0, ${width / 2} ${height}, ${width} ${height - pathStrokeWidth / 2}`;
+    pathD = `M ${padding} ${padding} C ${width / 2} ${padding}, ${width / 2} ${height - padding}, ${width - padding} ${height - padding}`;
   } else {
-    pathD = `M 0 ${height} C ${width / 2} ${height}, ${width / 2} 0, ${width} 0`;
+    pathD = `M ${padding} ${height-padding} C ${width / 2} ${height - padding}, ${width / 2} ${padding}, ${width - padding} ${padding}`;
   }
 
 
