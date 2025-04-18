@@ -1,28 +1,41 @@
+$socketSize: 1rem;
+
 .node {
+  color: white;
   position: absolute;
-  width: 200px;
-  aspect-ratio: 1;
+  width: 250px;
+  min-height: 100px;
   background-color: #00000077;
   border-radius: 0.25rem;
   border: 2px solid transparent;
   cursor: grab;
   transition: color 250ms, border-color 250ms, background-color 250ms;
+  z-index: 5;
 
-  &:hover {
-    background-color: #00000088;
-    border-color: #696969;
+  // &:hover, &.active {
+  //   background-color: #00000088;
+  //   border-color: #696969;
+  // }
+
+
+
+  .nodeContent {
+
+    .nodeName {
+      font-weight: bold;
+      background-color: black;
+      padding: $socketSize/2 $socketSize;
+    }
   }
-
-  $socketSize: 1rem;
 
   .sockets {
     display: flex;
     flex-direction: column;
     gap: $socketSize / 2;
-    // background-color: pink;
     height: 100%;
     position: absolute;
     justify-content: space-around;
+    top: 0;
 
 
     &.inputs {
@@ -34,7 +47,7 @@
     }
 
     .socket {
-      background-color: #f6fca9;
+      background-color: #bdc182;
       opacity: 0.25;
       width: $socketSize;
       aspect-ratio: 1;

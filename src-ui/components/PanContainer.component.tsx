@@ -1,10 +1,15 @@
 import {
   type Component,
   createSignal,
+  For,
 } from "solid-js";
+import type {
+  MouseDownValues,
+} from "../types";
 import Node from "./Node.component";
 import cn from "classnames";
 import styles from "./PanContainer.module.scss";
+import { allNodes } from "../signals/nodes";
 
 const PanContainer: Component = () => {
   const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
@@ -60,8 +65,9 @@ const PanContainer: Component = () => {
           top: `${y()}px`,
         }}
       >
-        <Node initialX={400} initialY={200} />
-        <Node initialX={800} initialY={500} />
+        <For each={Object.values(allNodes)}>
+          {(node) => (<Node node={node} />)}
+        </For>
       </div>
     </div>
   );

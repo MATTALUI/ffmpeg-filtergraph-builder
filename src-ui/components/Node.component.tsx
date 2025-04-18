@@ -1,20 +1,24 @@
 import {
   type Component,
-  createSignal
+  createSignal,
+  For,
 } from "solid-js";
+import type {
+  MouseDownValues,
+  Node,
+} from "../types";
 import styles from "./Node.module.scss";
 import cn from "classnames";
+import { updateNode } from "../signals/nodes";
 
 interface INodeProps {
-  initialX: number;
-  initialY: number;
+  node: Node;
 };
 
 const Node: Component<INodeProps> = (
   props: INodeProps,
 ) => {
-  const [x, setX] = createSignal(props.initialX);
-  const [y, setY] = createSignal(props.initialY);
+  const [active, setActive] = createSignal(false);
   const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
     mouseX: 0,
     mouseY: 0,
@@ -26,13 +30,17 @@ const Node: Component<INodeProps> = (
     const initialValues = mouseDownValues();
     const xDiff = initialValues.mouseX - event.clientX
     const yDiff = initialValues.mouseY - event.clientY;
-    const newX = initialValues.originalX - xDiff;
-    const newY = initialValues.originalY - yDiff;
-    setX(newX);
-    setY(newY);
+    const x = initialValues.originalX - xDiff;
+    const y = initialValues.originalY - yDiff;
+    updateNode({
+      id: props.node.id,
+      x,
+      y,
+    });
   }
 
   const handleMouseUp = (event: MouseEvent) => {
+    setActive(false)
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
   }
@@ -42,28 +50,35 @@ const Node: Component<INodeProps> = (
     setMouseDownValues({
       mouseX: event.clientX,
       mouseY: event.clientY,
-      originalX: x(),
-      originalY: y(),
+      originalX: props.node.x,
+      originalY: props.node.y,
     });
+    setActive(true);
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   }
 
   return (
     <div
-      class={styles.node}
+      class={cn(styles.node, active() && styles.active)}
       style={{
-        left: `${x()}px`,
-        top: `${y()}px`,
+        left: `${props.node.x}px`,
+        top: `${props.node.y}px`,
       }}
       onMouseDown={handleMouseDown}
     >
+      <div class={styles.nodeContent}>
+        <div class={styles.nodeName}>{props.node.name}</div>
+      </div>
       <div class={cn(styles.sockets, styles.inputs)}>
-        <div class={styles.socket}></div>
-        <div class={styles.socket}></div>
+        <For each={props.node.inputs}>
+          {(_inputId) => (<div class={styles.socket}></div>)}
+        </For>
       </div>
       <div class={cn(styles.sockets, styles.outputs)}>
-        <div class={styles.socket}></div>
+        <For each={props.node.outputs}>
+          {(_inputId) => (<div class={styles.socket}></div>)}
+        </For>
       </div>
     </div>
   );
