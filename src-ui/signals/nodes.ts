@@ -11,7 +11,7 @@ const [allNodes, setAllNodes] = createStore<Record<Node["id"], Node>>({
   "testinput": {
     id: "testinput",
     name: "Test Input",
-    x: 400,
+    x: 200,
     y: 300,
     inputs: [],
     outputs: ["testFilter"],

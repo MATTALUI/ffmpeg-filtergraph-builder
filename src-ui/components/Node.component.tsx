@@ -7,6 +7,7 @@ import type {
   MouseDownValues,
   Node,
 } from "../types";
+import { TEMPSOCKET } from "../constants";
 import styles from "./Node.module.scss";
 import cn from "classnames";
 import { updateNode } from "../signals/nodes";
@@ -58,6 +59,36 @@ const Node: Component<INodeProps> = (
     document.addEventListener("mouseup", handleMouseUp);
   }
 
+  const handleSocketMouseUp = () => {
+    updateNode({
+      id: props.node.id,
+      inputs: props.node.inputs.filter(i => i !== TEMPSOCKET),
+      outputs: props.node.outputs.filter(i => i !== TEMPSOCKET),
+    });
+    document.removeEventListener("mouseup", handleSocketMouseUp);
+  }
+
+  const handleSocketMouseDown = (
+    event: MouseEvent,
+    socketType: "inputs" | "outputs",
+    index: number,
+  ) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const newSockets = [
+      ...props.node[socketType],
+    ];
+    if (newSockets[index]) {
+      // TODO: If there's already a connection here we should disconnect them
+    }
+    newSockets[index] = TEMPSOCKET;
+    updateNode({
+      id: props.node.id,
+      [socketType]: newSockets,
+    });
+    document.addEventListener("mouseup", handleSocketMouseUp);
+  }
+
   return (
     <div
       id={`node-${props.node.id}`}
@@ -73,15 +104,21 @@ const Node: Component<INodeProps> = (
       </div>
       <div class={cn(styles.sockets, styles.inputs)}>
         <For each={props.node.inputs}>
-          {(inputId) => (
-            <div class={cn(styles.socket, !!inputId && styles.connected)}/>
+          {(inputId, index) => (
+            <div
+              class={cn(styles.socket, !!inputId && styles.connected)}
+              onMouseDown={(e: MouseEvent) => handleSocketMouseDown(e, "inputs", index())}
+            />
           )}
         </For>
       </div>
       <div class={cn(styles.sockets, styles.outputs)}>
         <For each={props.node.outputs}>
-          {(inputId) => (
-            <div class={cn(styles.socket, !!inputId && styles.connected)}/>
+          {(outputId, index) => (
+            <div
+              class={cn(styles.socket, !!outputId && styles.connected)}
+              onMouseDown={(e: MouseEvent) => handleSocketMouseDown(e, "outputs", index())}
+            />
           )}
         </For>
       </div>

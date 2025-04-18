@@ -60,6 +60,7 @@ const PanContainer: Component = () => {
       onMouseDown={handleMouseDown}
     >
       <div
+        id="pan-screen"
         class={styles.pannable}
         style={{
           left: `${x()}px`,

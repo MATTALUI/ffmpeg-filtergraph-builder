@@ -1,4 +1,5 @@
-$socketSize: 1rem;
+$socketSize: 0.75rem;
+$socketColor: #bdc182;
 
 .node {
   color: white;
@@ -47,15 +48,15 @@ $socketSize: 1rem;
     }
 
     .socket {
-      background-color: #bdc182;
-      opacity: 0.69;
+      background-color: darken($socketColor, 30%);
       width: $socketSize;
       aspect-ratio: 1;
       border-radius: 100%;
       transition: all 250ms;
+      cursor: crosshair;
 
       &:hover, &.connected {
-        opacity: 1;
+        background-color: $socketColor;
       }
     }
   }
