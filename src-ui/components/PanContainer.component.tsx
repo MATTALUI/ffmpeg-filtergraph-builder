@@ -40,6 +40,7 @@ const PanContainer: Component = () => {
   }
 
   const handleMouseDown = (event: MouseEvent) => {
+    if (event.button === 2) return;
     setMouseIsDown(true);
     setMouseDownValues({
       mouseX: event.clientX,
