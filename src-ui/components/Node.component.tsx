@@ -10,7 +10,7 @@ import type {
 import { TEMPSOCKET } from "../constants";
 import styles from "./Node.module.scss";
 import cn from "classnames";
-import { updateNode } from "../signals/nodes";
+import { allNodes, updateNode } from "../signals/nodes";
 
 interface INodeProps {
   node: Node;
@@ -40,8 +40,69 @@ const Node: Component<INodeProps> = (
     });
   }
 
+  const attemptConnection = (event: MouseEvent) => {
+    console.log("attemptConnection");
+    // I don't like this, but it'll get us there until I can refactor into
+    // something better...
+    const currentNode = allNodes[props.node.id];
+    console.log(currentNode);
+    if (!currentNode) return;
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    const threshold = 15;
+    let closestDistance = Infinity;
+    let closestSocketEle: HTMLDivElement | null = null;
+    Array.from(document.querySelectorAll<HTMLDivElement>(`.${styles.socket}`)).forEach((socketEle) => {
+      const bounds = socketEle.getBoundingClientRect();
+      const centerX = bounds.x + (bounds.width / 2);
+      const centerY = bounds.y + (bounds.height);
+      const distance = Math.sqrt(
+        Math.pow(Math.abs(mouseX - centerX), 2) +
+        Math.pow(Math.abs(mouseY - centerY), 2)
+      );
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestSocketEle = socketEle;
+      }
+    });
+    if (!closestSocketEle || closestDistance > threshold) return;
+    const nodeEle = (closestSocketEle as HTMLDivElement).closest<HTMLDivElement>(`.${styles.node}`);
+    if (!nodeEle) throw new Error("Didn't find socket elements");
+    const nodeId = nodeEle.id.split("-")[1];
+    const inputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.inputs} > .${styles.socket}`));
+    const outputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.outputs} > .${styles.socket}`));
+    const inputIndex = inputSockets.indexOf(closestSocketEle);
+    const outputIndex = outputSockets.indexOf(closestSocketEle);
+    const socketIndex = Math.max(inputIndex, outputIndex);
+    const socketType = inputIndex < 0 ? "outputs" : "inputs";
+    console.table({ nodeId, socketType, socketIndex });
+
+    const targetNode = allNodes[nodeId];
+    if (targetNode[socketType][socketIndex]) {
+      console.log("gota disconnect first");
+      const oldConnectionId = targetNode[socketType][socketIndex];
+      const otherNode = allNodes[oldConnectionId];
+      updateNode({
+        id: otherNode.id,
+        inputs: otherNode.inputs.map(i => i == nodeId ? null : i),
+        outputs: otherNode.outputs.map(i => i == nodeId ? null : i),
+      });
+    }
+    const updatedSockets = [...targetNode[socketType]];
+    updatedSockets[socketIndex] = currentNode.id;
+    updateNode({
+      id: targetNode.id,
+      [socketType]: updatedSockets,
+    });
+    updateNode({
+      id: currentNode.id,
+      inputs: currentNode.inputs.map(i => i == TEMPSOCKET ? nodeId : i),
+      outputs: currentNode.outputs.map(i => i == TEMPSOCKET ? nodeId : i),
+    });
+  }
+
   const handleMouseUp = (_event: MouseEvent) => {
-    setActive(false)
+    setActive(false);
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
   }
@@ -59,11 +120,13 @@ const Node: Component<INodeProps> = (
     document.addEventListener("mouseup", handleMouseUp);
   }
 
-  const handleSocketMouseUp = () => {
+  const handleSocketMouseUp = (event: MouseEvent) => {
+    attemptConnection(event);
+    const currentNode = allNodes[props.node.id];
     updateNode({
       id: props.node.id,
-      inputs: props.node.inputs.filter(i => i !== TEMPSOCKET),
-      outputs: props.node.outputs.filter(i => i !== TEMPSOCKET),
+      inputs: currentNode.inputs.map(i => i == TEMPSOCKET ? null : i),
+      outputs: currentNode.outputs.map(i => i == TEMPSOCKET ? null : i),
     });
     document.removeEventListener("mouseup", handleSocketMouseUp);
   }
@@ -79,7 +142,13 @@ const Node: Component<INodeProps> = (
       ...props.node[socketType],
     ];
     if (newSockets[index]) {
-      // TODO: If there's already a connection here we should disconnect them
+      const oldConnectionId = newSockets[index];
+      const otherNode = allNodes[oldConnectionId];
+      updateNode({
+        id: otherNode.id,
+        inputs: otherNode.inputs.map(i => i == props.node.id ? null : i),
+        outputs: otherNode.outputs.map(i => i == props.node.id ? null : i),
+      });
     }
     newSockets[index] = TEMPSOCKET;
     updateNode({
