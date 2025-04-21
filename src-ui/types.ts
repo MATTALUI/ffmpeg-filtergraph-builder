@@ -15,7 +15,11 @@ export type MouseDownValues = {
 };
 
 export type FFMPEGFilter = {
-  name: string;
+  name: String;
+  timeline_support: boolean;
+  slice_threading: boolean;
+  command_support: boolean;
+  description: string;
 };
 
 export type APIServiceBase = {
