@@ -1,0 +1,32 @@
+.filterSelectorContainer {
+    // padding: 0.5em 1rem;
+}
+
+.searchInput {
+    width: 100%;
+    border: 1px solid #dddddd;
+    outline: 0;
+    border-radius: 3px;
+    padding: 0.125em 0.5rem;
+    font-size: 1rem;
+}
+
+.inputContainer {
+    border-bottom: 1px solid black;
+    padding: 0.5em 0.25rem;
+}
+
+.filterOption {
+    padding: 0.5em 1rem;
+    border-bottom: 1px solid #dddddd;
+    cursor: pointer;
+
+    &:hover {
+        background-color: lightblue;
+    }
+}
+
+.noResults {
+    padding: 0.125em 1rem;
+    color: #888888;
+}

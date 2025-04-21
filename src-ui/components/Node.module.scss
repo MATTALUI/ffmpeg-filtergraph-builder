@@ -55,7 +55,8 @@ $socketColor: #bdc182;
       transition: all 250ms;
       cursor: crosshair;
 
-      &:hover, &.connected {
+      &:hover,
+      &.connected {
         background-color: $socketColor;
       }
     }

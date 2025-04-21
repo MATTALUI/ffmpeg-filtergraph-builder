@@ -16,7 +16,7 @@ $hoverColor: lightblue;
 .menuContainer {
     background-color: $backgroundColor;
     position: fixed;
-    width: $menuWidth;
+    min-width: $menuWidth;
     min-height: 30px;
     border-radius: $borderRadius;
 }
@@ -24,9 +24,16 @@ $hoverColor: lightblue;
 .subMenu {
     display: none;
     background-color: $backgroundColor;
-    width: $menuWidth;
+    min-width: $menuWidth;
     // padding: 0.5em 1rem;
     border-radius: 0 $borderRadius $borderRadius 0;
+    position: absolute;
+    left: $menuWidth;
+    top: 0;
+
+    &.open {
+        display: block;
+    }
 }
 
 .menuOption {
@@ -48,11 +55,8 @@ $hoverColor: lightblue;
     &:hover {
         background-color: $hoverColor;
 
-        & > .subMenu {
+        &>.subMenu {
             display: block;
-            position: absolute;
-            left: $menuWidth;
-            top: 0;
         }
     }
 

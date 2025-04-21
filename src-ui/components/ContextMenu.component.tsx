@@ -7,6 +7,7 @@ import {
 } from "solid-js";
 import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
+import FilterSelector from "./FilterSelector.component";
 
 const ContextMenu: Component = () => {
   const [isOpen, setIsOpen] = createSignal(false);
@@ -16,6 +17,7 @@ const ContextMenu: Component = () => {
   const open = () => setIsOpen(true);
 
   const handleContextMenu = (event: MouseEvent) => {
+    if (event.ctrlKey) return;
     event.preventDefault();
     event.stopPropagation();
     setAnchor({ x: event.clientX, y: event.clientY });
@@ -62,7 +64,9 @@ const ContextMenu: Component = () => {
           <div class={styles.menuOption}>
             Add Filter...
             <div class={styles.subMenu}>
-              Hello Number 3
+              <FilterSelector
+                closeMenu={close}
+              />
             </div>
           </div>
           <div class={cn(styles.menuOption, styles.disabled)}>
