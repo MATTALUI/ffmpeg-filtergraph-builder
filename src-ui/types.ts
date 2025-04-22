@@ -14,12 +14,19 @@ export type MouseDownValues = {
   originalY: number;
 };
 
+export type FFMPEGFilterInputOutput = {
+  name: string;
+  stream_type: "video" | "audio";
+};
+
 export type FFMPEGFilter = {
   name: String;
   timeline_support: boolean;
   slice_threading: boolean;
   command_support: boolean;
   description: string;
+  inputs: FFMPEGFilterInputOutput[];
+  outputs: FFMPEGFilterInputOutput[];
 };
 
 export type APIServiceBase = {

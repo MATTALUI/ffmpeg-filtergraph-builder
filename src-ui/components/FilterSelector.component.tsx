@@ -65,9 +65,15 @@ const FilterSelector: Component<IFilterSelectorProps> = (
           </div>
         )}
       </For>
-      <Show when={noSearchResult()}>
+      <Show when={allFilters.loading}>
+        <div class={styles.loaderContainer}>
+          <div class={styles.loader} />
+          <span>Loading Filters</span>
+        </div>
+      </Show>
+      <Show when={noSearchResult() && !allFilters.loading}>
         <div class={styles.noResults}>
-          No Filters Available For Search "{filterSearch()}"
+          No Filters Available {!!filterSearch() && `For Search "${filterSearch()}"`}
         </div>
       </Show>
       <Show when={filterSearchResults().more > 0}>
