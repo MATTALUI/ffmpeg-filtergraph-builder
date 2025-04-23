@@ -66,4 +66,12 @@ export const updateNode = (updates: NodeUpdate) => {
   });
 }
 
+export const addNode = (newNode: Node) => {
+  setAllNodes((currentNodes) => {
+    const newNodes = structuredClone(currentNodes);
+    newNodes[newNode.id] = newNode;
+    return newNodes;
+  });
+}
+
 export { allNodes };

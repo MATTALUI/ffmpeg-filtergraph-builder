@@ -7,7 +7,9 @@ import {
 import { debounce } from "lodash";
 import styles from "./FilterSelector.module.scss";
 import { allFilters } from "../signals/filters";
-import { FFMPEGFilter } from "../types";
+import type { FFMPEGFilter, Node } from "../types";
+import { workspaceMouseCoords } from "../signals/ui";
+import { addNode } from "../signals/nodes";
 
 interface IFilterSelectorProps {
   closeMenu: () => void;
@@ -38,8 +40,15 @@ const FilterSelector: Component<IFilterSelectorProps> = (
 
   const noSearchResult = () => filterSearchResults().displayed.length === 0;
 
-  const addFilter = (filter: FFMPEGFilter) => {
-    console.log(filter);
+  const addNewFilter = (filter: FFMPEGFilter) => {
+    const newNode: Node = {
+      id: crypto.randomUUID(),
+      name: filter.name,
+      inputs: filter.inputs.map(() => null),
+      outputs: filter.outputs.map(() => null),
+      ...workspaceMouseCoords(),
+    };
+    addNode(newNode);
     setFilterSearch("");
     props.closeMenu();
   }
@@ -59,7 +68,7 @@ const FilterSelector: Component<IFilterSelectorProps> = (
         {(filter) => (
           <div
             class={styles.filterOption}
-            onClick={() => addFilter(filter)}
+            onClick={() => addNewFilter(filter)}
           >
             {filter.name}
           </div>

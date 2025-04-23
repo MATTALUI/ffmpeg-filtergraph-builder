@@ -2,13 +2,13 @@ import {
   For,
   createMemo,
   createSignal,
-  onCleanup,
   onMount,
   type Component,
 } from "solid-js";
 import { TEMPSOCKET } from "../constants";
 import type { Node } from "../types";
 import { allNodes } from "../signals/nodes";
+import { workspaceMouseCoords } from "../signals/ui";
 
 type ConnectionSummary = {
   x: number;
@@ -21,7 +21,6 @@ type ConnectionSummary = {
 
 const ConnectionManager: Component = () => {
   const [hasRendered, setHasRendered] = createSignal(false);
-  const [mouseCoords, setMouseCoords] = createSignal({ x: 0, y: 0, });
   onMount(() => setHasRendered(true));
 
   const buildNodeConnectionSummary = (
@@ -73,30 +72,20 @@ const ConnectionManager: Component = () => {
     };
   }
 
-  const watchMouse = (event: MouseEvent) => {
-    setMouseCoords({
-      x: event.clientX,
-      y: event.clientY,
-    });
-  }
-
   const buildTempNode = (node: Node): ConnectionSummary => {
     const outputSocketIndex = node.outputs.indexOf(TEMPSOCKET);
     const inputSocketIndex = node.inputs.indexOf(TEMPSOCKET);
     const socketIndex = Math.max(outputSocketIndex, inputSocketIndex);
     const socketType = outputSocketIndex < 0 ? "inputs" : "outputs";
     const nodeEle = document.querySelector(`#node-${node.id}`);
-    const panEle = document.querySelector(`#pan-screen`);
-    if (!nodeEle || !panEle) throw new Error("Didn't find socket elements");
+    if (!nodeEle) throw new Error("Didn't find socket elements");
     const nodeBounds = nodeEle.getBoundingClientRect();
-    const panBounds = panEle.getBoundingClientRect();
     const nodeX = socketType === "outputs" ? node.x + nodeBounds.width : node.x;
     const segmentSize = nodeBounds.height / node[socketType].length;
     const socketYOffset =
       (segmentSize * socketIndex - 1) + (segmentSize / 2);
     const nodeY = node.y + socketYOffset;
-    const mouseX = mouseCoords().x - panBounds.x;
-    const mouseY = mouseCoords().y - panBounds.y;
+    const { x: mouseX, y: mouseY } = workspaceMouseCoords();
 
     const padding = 10;
     const x = Math.min(nodeX, mouseX) - padding;
@@ -145,14 +134,6 @@ const ConnectionManager: Component = () => {
     });
 
     return Object.values(connections);
-  })
-
-  onMount(() => {
-    document.addEventListener("mousemove", watchMouse);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener("mousemove", watchMouse);
   });
 
   return (

@@ -13,10 +13,11 @@ $socketColor: #bdc182;
   transition: color 250ms, border-color 250ms, background-color 250ms;
   z-index: 5;
 
-  // &:hover, &.active {
-  //   background-color: #00000088;
-  //   border-color: #696969;
-  // }
+  // &:hover,
+  &.active {
+    background-color: #00000088;
+    border-color: #696969;
+  }
 
 
 

@@ -20,7 +20,7 @@ export type FFMPEGFilterInputOutput = {
 };
 
 export type FFMPEGFilter = {
-  name: String;
+  name: string;
   timeline_support: boolean;
   slice_threading: boolean;
   command_support: boolean;

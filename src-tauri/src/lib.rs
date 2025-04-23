@@ -100,7 +100,7 @@ async fn get_filter_details(filter: FFMPEGFilter) -> FFMPEGFilter {
                 stream_type: entries[2].to_string().replace(&['(', ')'], ""),
             };
             // println!("{:?}", &output);
-            filter.inputs.push(output);
+            filter.outputs.push(output);
         } else if line == format!("{} AVOptions:", filter.name) {
             collection_type = "options";
             // println!("collecting {}", collection_type);

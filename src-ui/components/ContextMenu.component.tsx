@@ -22,7 +22,6 @@ const ContextMenu: Component = () => {
     event.stopPropagation();
     setAnchor({ x: event.clientX, y: event.clientY });
     open();
-    console.log("right click");
   }
 
   const stopProp = (event: MouseEvent) => {

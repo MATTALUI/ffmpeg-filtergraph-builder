@@ -41,11 +41,9 @@ const Node: Component<INodeProps> = (
   }
 
   const attemptConnection = (event: MouseEvent) => {
-    console.log("attemptConnection");
     // I don't like this, but it'll get us there until I can refactor into
     // something better...
     const currentNode = allNodes[props.node.id];
-    console.log(currentNode);
     if (!currentNode) return;
     const mouseX = event.clientX;
     const mouseY = event.clientY;
@@ -68,18 +66,16 @@ const Node: Component<INodeProps> = (
     if (!closestSocketEle || closestDistance > threshold) return;
     const nodeEle = (closestSocketEle as HTMLDivElement).closest<HTMLDivElement>(`.${styles.node}`);
     if (!nodeEle) throw new Error("Didn't find socket elements");
-    const nodeId = nodeEle.id.split("-")[1];
+    const nodeId = nodeEle.id.slice("node-".length);
     const inputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.inputs} > .${styles.socket}`));
     const outputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.outputs} > .${styles.socket}`));
     const inputIndex = inputSockets.indexOf(closestSocketEle);
     const outputIndex = outputSockets.indexOf(closestSocketEle);
     const socketIndex = Math.max(inputIndex, outputIndex);
     const socketType = inputIndex < 0 ? "outputs" : "inputs";
-    console.table({ nodeId, socketType, socketIndex });
 
     const targetNode = allNodes[nodeId];
     if (targetNode[socketType][socketIndex]) {
-      console.log("gota disconnect first");
       const oldConnectionId = targetNode[socketType][socketIndex];
       const otherNode = allNodes[oldConnectionId];
       updateNode({
