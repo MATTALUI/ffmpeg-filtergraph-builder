@@ -8,6 +8,10 @@ import {
 import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
 import FilterSelector from "./FilterSelector.component";
+import { open as openFiles } from '@tauri-apps/plugin-dialog';
+import type { Node } from "../types";
+import { addNode } from "../signals/nodes";
+import { workspaceMouseCoords } from "../signals/ui";
 
 const ContextMenu: Component = () => {
   const [isOpen, setIsOpen] = createSignal(false);
@@ -28,6 +32,27 @@ const ContextMenu: Component = () => {
     event.stopPropagation();
     event.preventDefault();
   };
+
+  const addMediaInputs = async () => {
+    const files = await openFiles({ multiple: true, directory: false }) || [];
+    const { x: mouseX, y: mouseY } = workspaceMouseCoords();
+    const offsetSize = 25;
+    files.forEach((fileName, index) => {
+      const pathSegs = fileName.split("/")
+      const name = pathSegs[pathSegs.length - 1];
+      const newNode: Node = {
+        id: crypto.randomUUID(),
+        x: mouseX + (index * offsetSize),
+        y: mouseY + (index * offsetSize),
+        name,
+        inputs: [],
+        outputs: [null],
+      };
+
+      addNode(newNode);
+    });
+    close();
+  }
 
   onMount(() => {
     document.addEventListener("contextmenu", handleContextMenu);
@@ -54,11 +79,12 @@ const ContextMenu: Component = () => {
           <div class={styles.menuOption}>
             Save
           </div>
-          <div class={styles.menuOption}>
+          <div
+            class={styles.menuOption}
+            onClick={addMediaInputs}
+          >
+            {/* This will need some updates to support a web service */}
             Add Media Input...
-            <div class={styles.subMenu}>
-              Hello
-            </div>
           </div>
           <div class={styles.menuOption}>
             Add Filter...

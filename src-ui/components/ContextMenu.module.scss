@@ -39,6 +39,7 @@ $hoverColor: lightblue;
 .menuOption {
     padding: 0.5em 1rem;
     position: relative;
+    cursor: pointer;
 
     &:first-child {
         border-radius: $borderRadius $borderRadius 0 0;
