@@ -27,8 +27,12 @@ const ConnectionManager: Component = () => {
     outputNode: Node,
     inputNode: Node
   ): ConnectionSummary => {
-    const outputSocketIndex = outputNode.outputs.indexOf(inputNode.id);
-    const inputSocketIndex = inputNode.inputs.indexOf(outputNode.id);
+    const outputSocket = outputNode.outputs.find(o => o.connectedNodes.includes(inputNode.id));
+    if (!outputSocket) throw new Error("Could not find connection in output");
+    const outputSocketIndex = outputNode.outputs.indexOf(outputSocket);
+    const inputSocket = inputNode.inputs.find(i => i.connectedNodes.includes(outputNode.id));
+    if (!inputSocket) throw new Error("Could not find connection in input");
+    const inputSocketIndex = inputNode.inputs.indexOf(inputSocket);
     const outputEle = document.querySelector(`#node-${outputNode.id}`);
     const inputEle = document.querySelector(`#node-${inputNode.id}`);
     if (!outputEle || !inputEle) throw new Error("Didn't find socket elements");
@@ -73,10 +77,12 @@ const ConnectionManager: Component = () => {
   }
 
   const buildTempNode = (node: Node): ConnectionSummary => {
-    const outputSocketIndex = node.outputs.indexOf(TEMPSOCKET);
-    const inputSocketIndex = node.inputs.indexOf(TEMPSOCKET);
-    const socketIndex = Math.max(outputSocketIndex, inputSocketIndex);
-    const socketType = outputSocketIndex < 0 ? "inputs" : "outputs";
+    const outputSocket = node.outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+    const inputSocket = node.inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+    const socketType = !!inputSocket ? "inputs" : "outputs";
+    const socketIndex = !!inputSocket
+      ? node.inputs.indexOf(inputSocket)
+      : node.outputs.indexOf(outputSocket!);
     const nodeEle = document.querySelector(`#node-${node.id}`);
     if (!nodeEle) throw new Error("Didn't find socket elements");
     const nodeBounds = nodeEle.getBoundingClientRect();
@@ -111,25 +117,26 @@ const ConnectionManager: Component = () => {
   const connections = createMemo(() => {
     if (!hasRendered()) return;
     const connections: Record<string, ConnectionSummary> = {};
-
     Object.values(allNodes).forEach((node) => {
-      node.inputs.forEach((node2Id) => {
-        if (!node2Id) return;
-        const key = [node.id, node2Id].sort().join("-");
-        if (connections[key]) return;
-        if (node2Id === TEMPSOCKET)
-          connections[key] = buildTempNode(node);
-        else
-          connections[key] = buildNodeConnectionSummary(allNodes[node2Id], node);
+      node.inputs.forEach((nodeConnection) => {
+        nodeConnection.connectedNodes.forEach((node2Id) => {
+          const key = [node.id, node2Id].sort().join("-");
+          if (connections[key]) return;
+          if (node2Id === TEMPSOCKET)
+            connections[key] = buildTempNode(node);
+          else
+            connections[key] = buildNodeConnectionSummary(allNodes[node2Id], node);
+        });
       });
-      node.outputs.forEach((node2Id) => {
-        if (!node2Id) return;
-        const key = [node.id, node2Id].sort().join("-");
-        if (connections[key]) return;
-        if (node2Id === TEMPSOCKET)
-          connections[key] = buildTempNode(node);
-        else
-          connections[key] = buildNodeConnectionSummary(node, allNodes[node2Id]);
+      node.outputs.forEach((nodeConnection) => {
+        nodeConnection.connectedNodes.forEach((node2Id) => {
+          const key = [node.id, node2Id].sort().join("-");
+          if (connections[key]) return;
+          if (node2Id === TEMPSOCKET)
+            connections[key] = buildTempNode(node);
+          else
+            connections[key] = buildNodeConnectionSummary(node, allNodes[node2Id]);
+        });
       });
     });
 
@@ -144,7 +151,6 @@ const ConnectionManager: Component = () => {
             height={connection.height}
             width={connection.width}
             style={{
-              // "background-color": "#69696969",
               position: "absolute",
               top: `${connection.y}px`,
               left: `${connection.x}px`,

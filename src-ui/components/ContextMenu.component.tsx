@@ -46,7 +46,7 @@ const ContextMenu: Component = () => {
         y: mouseY + (index * offsetSize),
         name,
         inputs: [],
-        outputs: [null],
+        outputs: [{ type: "video", connectedNodes: [], name: "default" }],
       };
 
       addNode(newNode);
@@ -84,7 +84,7 @@ const ContextMenu: Component = () => {
             onClick={addMediaInputs}
           >
             {/* This will need some updates to support a web service */}
-            Add Media Input...
+            Add Input File...
           </div>
           <div class={styles.menuOption}>
             Add Filter...

@@ -10,7 +10,8 @@ import type {
 import { TEMPSOCKET } from "../constants";
 import styles from "./Node.module.scss";
 import cn from "classnames";
-import { allNodes, updateNode } from "../signals/nodes";
+import { allNodes, removeTempConnections, updateNodes } from "../signals/nodes";
+import { cloneDeep, uniq } from "lodash";
 
 interface INodeProps {
   node: Node;
@@ -19,6 +20,7 @@ interface INodeProps {
 const Node: Component<INodeProps> = (
   props: INodeProps,
 ) => {
+  const currentNode = () => allNodes[props.node.id];
   const [active, setActive] = createSignal(false);
   const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
     mouseX: 0,
@@ -33,18 +35,17 @@ const Node: Component<INodeProps> = (
     const yDiff = initialValues.mouseY - event.clientY;
     const x = initialValues.originalX - xDiff;
     const y = initialValues.originalY - yDiff;
-    updateNode({
-      id: props.node.id,
+    updateNodes([{
+      id: currentNode().id,
       x,
       y,
-    });
+    }]);
   }
 
   const attemptConnection = (event: MouseEvent) => {
     // I don't like this, but it'll get us there until I can refactor into
     // something better...
-    const currentNode = allNodes[props.node.id];
-    if (!currentNode) return;
+    if (!currentNode()) return;
     const mouseX = event.clientX;
     const mouseY = event.clientY;
     const threshold = 15;
@@ -71,30 +72,33 @@ const Node: Component<INodeProps> = (
     const outputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.outputs} > .${styles.socket}`));
     const inputIndex = inputSockets.indexOf(closestSocketEle);
     const outputIndex = outputSockets.indexOf(closestSocketEle);
-    const socketIndex = Math.max(inputIndex, outputIndex);
-    const socketType = inputIndex < 0 ? "outputs" : "inputs";
-
+    const updates = []
+    // Update the Target Node
+    const targetSocketIndex = Math.max(inputIndex, outputIndex);
+    const targetSocketType = inputIndex < 0 ? "outputs" : "inputs";
     const targetNode = allNodes[nodeId];
-    if (targetNode[socketType][socketIndex]) {
-      const oldConnectionId = targetNode[socketType][socketIndex];
-      const otherNode = allNodes[oldConnectionId];
-      updateNode({
-        id: otherNode.id,
-        inputs: otherNode.inputs.map(i => i == nodeId ? null : i),
-        outputs: otherNode.outputs.map(i => i == nodeId ? null : i),
-      });
-    }
-    const updatedSockets = [...targetNode[socketType]];
-    updatedSockets[socketIndex] = currentNode.id;
-    updateNode({
+    const updatedTargetSockets = cloneDeep(targetNode[targetSocketType]);
+    updatedTargetSockets[targetSocketIndex].connectedNodes =
+      uniq([...updatedTargetSockets[targetSocketIndex].connectedNodes, currentNode().id]);
+    updates.push({
       id: targetNode.id,
+      [targetSocketType]: updatedTargetSockets,
+    });
+    // Update the Original Node
+    const outputSocket = currentNode().outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+    const inputSocket = currentNode().inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+    const socketType = !!inputSocket ? "inputs" : "outputs";
+    const socketIndex = !!inputSocket
+      ? currentNode().inputs.indexOf(inputSocket)
+      : currentNode().outputs.indexOf(outputSocket!);
+    const updatedSockets = cloneDeep(currentNode()[socketType]);
+    updatedSockets[socketIndex].connectedNodes =
+      uniq([...updatedSockets[socketIndex].connectedNodes.filter(id => id !== TEMPSOCKET), targetNode.id]);
+    updates.push({
+      id: currentNode().id,
       [socketType]: updatedSockets,
     });
-    updateNode({
-      id: currentNode.id,
-      inputs: currentNode.inputs.map(i => i == TEMPSOCKET ? nodeId : i),
-      outputs: currentNode.outputs.map(i => i == TEMPSOCKET ? nodeId : i),
-    });
+    updateNodes(updates);
   }
 
   const handleMouseUp = (_event: MouseEvent) => {
@@ -108,8 +112,8 @@ const Node: Component<INodeProps> = (
     setMouseDownValues({
       mouseX: event.clientX,
       mouseY: event.clientY,
-      originalX: props.node.x,
-      originalY: props.node.y,
+      originalX: currentNode().x,
+      originalY: currentNode().y,
     });
     setActive(true);
     document.addEventListener("mousemove", handleMouseMove);
@@ -118,12 +122,7 @@ const Node: Component<INodeProps> = (
 
   const handleSocketMouseUp = (event: MouseEvent) => {
     attemptConnection(event);
-    const currentNode = allNodes[props.node.id];
-    updateNode({
-      id: props.node.id,
-      inputs: currentNode.inputs.map(i => i == TEMPSOCKET ? null : i),
-      outputs: currentNode.outputs.map(i => i == TEMPSOCKET ? null : i),
-    });
+    removeTempConnections(currentNode());
     document.removeEventListener("mouseup", handleSocketMouseUp);
   }
 
@@ -134,54 +133,43 @@ const Node: Component<INodeProps> = (
   ) => {
     event.stopPropagation();
     event.preventDefault();
-    const newSockets = [
-      ...props.node[socketType],
-    ];
-    if (newSockets[index]) {
-      const oldConnectionId = newSockets[index];
-      const otherNode = allNodes[oldConnectionId];
-      updateNode({
-        id: otherNode.id,
-        inputs: otherNode.inputs.map(i => i == props.node.id ? null : i),
-        outputs: otherNode.outputs.map(i => i == props.node.id ? null : i),
-      });
-    }
-    newSockets[index] = TEMPSOCKET;
-    updateNode({
-      id: props.node.id,
+    const newSockets = cloneDeep(currentNode()[socketType]);
+    newSockets[index].connectedNodes.push(TEMPSOCKET);
+    updateNodes([{
+      id: currentNode().id,
       [socketType]: newSockets,
-    });
+    }]);
     document.addEventListener("mouseup", handleSocketMouseUp);
   }
 
   return (
     <div
-      id={`node-${props.node.id}`}
+      id={`node-${currentNode().id}`}
       class={cn(styles.node, active() && styles.active)}
       style={{
-        left: `${props.node.x}px`,
-        top: `${props.node.y}px`,
+        left: `${currentNode().x}px`,
+        top: `${currentNode().y}px`,
       }}
       onMouseDown={handleMouseDown}
     >
       <div class={styles.nodeContent}>
-        <div class={styles.nodeName}>{props.node.name}</div>
+        <div class={styles.nodeName}>{currentNode().name}</div>
       </div>
       <div class={cn(styles.sockets, styles.inputs)}>
-        <For each={props.node.inputs}>
-          {(inputId, index) => (
+        <For each={currentNode().inputs}>
+          {(nodeInput, index) => (
             <div
-              class={cn(styles.socket, !!inputId && styles.connected)}
+              class={cn(styles.socket, !!nodeInput.connectedNodes.length && styles.connected)}
               onMouseDown={(e: MouseEvent) => handleSocketMouseDown(e, "inputs", index())}
             />
           )}
         </For>
       </div>
       <div class={cn(styles.sockets, styles.outputs)}>
-        <For each={props.node.outputs}>
-          {(outputId, index) => (
+        <For each={currentNode().outputs}>
+          {(nodeOutput, index) => (
             <div
-              class={cn(styles.socket, !!outputId && styles.connected)}
+              class={cn(styles.socket, !!nodeOutput.connectedNodes.length && styles.connected)}
               onMouseDown={(e: MouseEvent) => handleSocketMouseDown(e, "outputs", index())}
             />
           )}

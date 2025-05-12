@@ -44,8 +44,16 @@ const FilterSelector: Component<IFilterSelectorProps> = (
     const newNode: Node = {
       id: crypto.randomUUID(),
       name: filter.name,
-      inputs: filter.inputs.map(() => null),
-      outputs: filter.outputs.map(() => null),
+      inputs: filter.inputs.map((input) => ({
+        type: input.stream_type,
+        name: input.name,
+        connectedNodes: [],
+      })),
+      outputs: filter.outputs.map((output) => ({
+        type: output.stream_type,
+        name: output.name,
+        connectedNodes: [],
+      })),
       ...workspaceMouseCoords(),
     };
     addNode(newNode);
@@ -62,6 +70,9 @@ const FilterSelector: Component<IFilterSelectorProps> = (
           value={filterSearch()}
           placeholder="Search..."
           onkeyup={updateSearchTerm}
+          autocorrect="off"
+          spellcheck={false}
+          autocomplete="off"
         />
       </div>
       <For each={filterSearchResults().displayed}>

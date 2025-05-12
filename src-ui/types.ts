@@ -1,10 +1,18 @@
+export type ConnectionTypes = "audio" | "video" | "dynamic" | "sink";
+
+export type NodeConnection = {
+  type: ConnectionTypes;
+  name: string;
+  connectedNodes: string[];
+};
+
 export type Node = {
   id: string;
   name: string;
   x: number;
   y: number;
-  inputs: Array<string | null>;
-  outputs: Array<string | null>;
+  inputs: NodeConnection[];
+  outputs: NodeConnection[];
 };
 
 export type MouseDownValues = {
