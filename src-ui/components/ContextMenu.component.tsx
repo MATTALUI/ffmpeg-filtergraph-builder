@@ -37,8 +37,8 @@ const ContextMenu: Component = () => {
     const files = await openFiles({ multiple: true, directory: false }) || [];
     const { x: mouseX, y: mouseY } = workspaceMouseCoords();
     const offsetSize = 25;
-    files.forEach((fileName, index) => {
-      const pathSegs = fileName.split("/")
+    files.forEach((filePath, index) => {
+      const pathSegs = filePath.split("/")
       const name = pathSegs[pathSegs.length - 1];
       const newNode: Node = {
         id: crypto.randomUUID(),
@@ -47,8 +47,8 @@ const ContextMenu: Component = () => {
         name,
         inputs: [],
         outputs: [{ type: "video", connectedNodes: [], name: "default" }],
+        preview: filePath,
       };
-
       addNode(newNode);
     });
     close();

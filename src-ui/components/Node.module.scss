@@ -28,6 +28,12 @@ $socketColor: #bdc182;
       background-color: black;
       padding: $socketSize/2 $socketSize;
     }
+
+    .nodePreview {
+      & > img {
+        width: 100%;
+      }
+    }
   }
 
   .sockets {

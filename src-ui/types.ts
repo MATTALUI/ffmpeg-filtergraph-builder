@@ -13,6 +13,7 @@ export type Node = {
   y: number;
   inputs: NodeConnection[];
   outputs: NodeConnection[];
+  preview?: string;
 };
 
 export type MouseDownValues = {
@@ -69,5 +70,9 @@ export interface IAPIService {
   /**
    * 
    */
-  getAllFilters: () => APIServiceResponse<FFMPEGFilter[]>
+  getAllFilters: () => APIServiceResponse<FFMPEGFilter[]>;
+  /**
+   * 
+   */
+  getFilePreview (filePath: string): APIServiceResponse<string>;
 };

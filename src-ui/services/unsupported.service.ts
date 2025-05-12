@@ -17,6 +17,7 @@ const serviceError = async (justThrow: boolean = true): Promise<APIServiceFailur
 };
 
 const getAllFilters = async () => serviceError();
+const getFilePreview = async () => serviceError();
 
 const getServiceName = () => SERVICE_NAME;
 
@@ -30,6 +31,7 @@ let UnsupportedService: IAPIService = {
   getServiceName,
   displayServiceInformation,
   getAllFilters,
+  getFilePreview,
 };
 
 export default UnsupportedService;

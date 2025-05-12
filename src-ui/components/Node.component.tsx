@@ -1,8 +1,14 @@
 import {
   type Component,
+  createEffect,
   createSignal,
   For,
+  Show,
 } from "solid-js";
+import {
+  createStore,
+} from "solid-js/store";
+import { readFile } from '@tauri-apps/plugin-fs';
 import type {
   MouseDownValues,
   Node,
@@ -12,22 +18,46 @@ import styles from "./Node.module.scss";
 import cn from "classnames";
 import { allNodes, removeTempConnections, updateNodes } from "../signals/nodes";
 import { cloneDeep, uniq } from "lodash";
+import APIService from "../services";
+
+const loadHash: Record<string, string> = {};
 
 interface INodeProps {
   node: Node;
 };
+
+interface IPreviewStore {
+  loading: boolean;
+  loadedFileName: string | null;
+  previewUrl: string | null;
+};
+
+function base64FromUint8Array(uint8array: Uint8Array) {
+  let binary = '';
+  const len = uint8array.length;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(uint8array[i]);
+  }
+  return btoa(binary);
+}
 
 const Node: Component<INodeProps> = (
   props: INodeProps,
 ) => {
   const currentNode = () => allNodes[props.node.id];
   const [active, setActive] = createSignal(false);
+  const [previewData, updatePreviewData] = createStore<IPreviewStore>({
+    loading: false,
+    loadedFileName: null,
+    previewUrl: null,
+  });
   const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
     mouseX: 0,
     mouseY: 0,
     originalX: 0,
     originalY: 0,
   });
+  const loading = () => previewData.loading || true;
 
   const handleMouseMove = (event: MouseEvent) => {
     const initialValues = mouseDownValues();
@@ -142,6 +172,31 @@ const Node: Component<INodeProps> = (
     document.addEventListener("mouseup", handleSocketMouseUp);
   }
 
+  createEffect(async function updatePreview() {
+    const previewFile = currentNode().preview || null;
+    if (previewFile !== previewData.loadedFileName && previewFile) {
+      updatePreviewData({ ...previewData, loading: true });
+      const cachedData = loadHash[previewFile];
+      let previewUrl;
+      if (cachedData) {
+        previewUrl = cachedData;
+      } else {
+        const previewResponse = await APIService.getFilePreview(previewFile);
+        if (previewResponse.success) {
+          previewUrl = previewResponse.data;
+          loadHash[previewFile] = previewUrl;
+        } else {
+          console.error(previewResponse)
+        }
+      }
+      updatePreviewData({
+        loading: false,
+        loadedFileName: previewFile,
+        previewUrl,
+      });
+    }
+  });
+
   return (
     <div
       id={`node-${currentNode().id}`}
@@ -154,6 +209,13 @@ const Node: Component<INodeProps> = (
     >
       <div class={styles.nodeContent}>
         <div class={styles.nodeName}>{currentNode().name}</div>
+        <Show when={!!previewData.previewUrl}>
+          <div class={styles.nodePreview}>
+            <img
+              src={previewData.previewUrl!}
+            />
+          </div>
+        </Show>
       </div>
       <div class={cn(styles.sockets, styles.inputs)}>
         <For each={currentNode().inputs}>

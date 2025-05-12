@@ -1,9 +1,9 @@
-// use futures::Future;
 use futures::future::join_all;
 use regex::Regex;
 use serde::Serialize;
 use std::process::{Command, Output};
-// use std::boxed::Box;
+use std::fs;
+use base64;
 
 #[derive(Serialize, Debug, Clone)]
 struct FFMPEGFilterInputOutput {
@@ -26,6 +26,12 @@ struct FFMPEGFilter {
 #[tauri::command]
 fn greet(name: &str) -> String {
     return format!("Hello, {}! You've been greeted from Rust!", name);
+}
+
+#[tauri::command]
+fn get_file_preview(file_path: & str) -> String {
+    let data = std::fs::read(file_path).unwrap();
+    return base64::encode(&data);
 }
 
 #[tauri::command]
@@ -114,9 +120,10 @@ async fn get_filter_details(filter: FFMPEGFilter) -> FFMPEGFilter {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet, get_all_filters])
+        .invoke_handler(tauri::generate_handler![greet, get_all_filters, get_file_preview])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
