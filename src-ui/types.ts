@@ -6,7 +6,7 @@ export type NodeConnection = {
   connectedNodes: string[];
 };
 
-export type Node = {
+export type BaseNode = {
   id: string;
   name: string;
   x: number;
@@ -15,6 +15,20 @@ export type Node = {
   outputs: NodeConnection[];
   preview?: string;
 };
+
+export type InputNode = BaseNode & {
+  type: "input";
+}
+
+export type OutputNode = BaseNode & {
+  type: "output";
+}
+
+export type FilterNode = BaseNode & {
+  type: "filter";
+};
+
+export type Node = InputNode | OutputNode | FilterNode;
 
 export type MouseDownValues = {
   mouseX: number;

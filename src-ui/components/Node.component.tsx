@@ -8,7 +8,6 @@ import {
 import {
   createStore,
 } from "solid-js/store";
-import { readFile } from '@tauri-apps/plugin-fs';
 import type {
   MouseDownValues,
   Node,
@@ -48,7 +47,7 @@ const Node: Component<INodeProps> = (
     originalX: 0,
     originalY: 0,
   });
-  const loading = () => previewData.loading || true;
+  const loading = () => previewData.loading;
 
   const handleMouseMove = (event: MouseEvent) => {
     const initialValues = mouseDownValues();
@@ -164,6 +163,10 @@ const Node: Component<INodeProps> = (
   }
 
   createEffect(async function updatePreview() {
+    // NOTE: This check to see if we need to reload is actually not going to
+    // work because updating nodes will cause complete rerender of the node so
+    // this state will be cleared out and useless to check. There are going to
+    // be performance issues with this, but it's a necessary evil for now.
     const previewFile = currentNode().preview || null;
     if (previewFile !== previewData.loadedFileName && previewFile) {
       updatePreviewData({ ...previewData, loading: true });
@@ -199,7 +202,12 @@ const Node: Component<INodeProps> = (
       onMouseDown={handleMouseDown}
     >
       <div class={styles.nodeContent}>
-        <div class={styles.nodeName}>{currentNode().name}</div>
+        <div class={styles.nodeName}>
+          <span>{currentNode().name}</span>
+          <Show when={loading()}>
+            <div class={styles.loader} />
+          </Show>
+        </div>
         <Show when={!!previewData.previewUrl}>
           <div class={styles.nodePreview}>
             <img

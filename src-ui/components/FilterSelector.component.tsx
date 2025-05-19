@@ -7,7 +7,7 @@ import {
 import { debounce } from "lodash";
 import styles from "./FilterSelector.module.scss";
 import { allFilters } from "../signals/filters";
-import type { FFMPEGFilter, Node } from "../types";
+import type { FFMPEGFilter, FilterNode, } from "../types";
 import { workspaceMouseCoords } from "../signals/ui";
 import { addNode } from "../signals/nodes";
 
@@ -41,7 +41,8 @@ const FilterSelector: Component<IFilterSelectorProps> = (
   const noSearchResult = () => filterSearchResults().displayed.length === 0;
 
   const addNewFilter = (filter: FFMPEGFilter) => {
-    const newNode: Node = {
+    const newNode: FilterNode = {
+      type: "filter",
       id: crypto.randomUUID(),
       name: filter.name,
       inputs: filter.inputs.map((input) => ({

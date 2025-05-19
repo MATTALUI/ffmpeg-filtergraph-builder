@@ -12,6 +12,11 @@ $socketColor: #bdc182;
   cursor: grab;
   transition: color 250ms, border-color 250ms, background-color 250ms;
   z-index: 5;
+  user-select: none;
+
+  & * {
+    user-select: none;
+  }
 
   // &:hover,
   &.active {
@@ -27,11 +32,15 @@ $socketColor: #bdc182;
       font-weight: bold;
       background-color: black;
       padding: $socketSize/2 $socketSize;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .nodePreview {
-      & > img {
+      &>img {
         width: 100%;
+        user-select: none;
       }
     }
   }
@@ -67,5 +76,27 @@ $socketColor: #bdc182;
         background-color: $socketColor;
       }
     }
+  }
+}
+
+
+.loader {
+  width: 20px;
+  aspect-ratio: 1;
+  border: 5px solid #FFF;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
   }
 }

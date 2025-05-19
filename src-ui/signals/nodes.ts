@@ -9,56 +9,7 @@ import { cloneDeep } from "lodash";
 
 type NodeUpdate = Pick<Node, "id"> & Partial<Omit<Node, "id">>;
 
-const [allNodes, setAllNodes] = createStore<Record<Node["id"], Node>>({
-  // "testinput": {
-  //   id: "testinput",
-  //   name: "HomeVideo.mp4",
-  //   x: 100,
-  //   y: 200,
-  //   inputs: [],
-  //   outputs: ["testFilter"],
-  // },
-  // "testFilter": {
-  //   id: "testFilter",
-  //   name: "chromakey",
-  //   x: 469,
-  //   y: 250,
-  //   inputs: ["testinput"],
-  //   outputs: [null],
-  // },
-  // "testpic": {
-  //   id: "testpic",
-  //   name: "CompanyLogo.png",
-  //   x: 69,
-  //   y: 69,
-  //   inputs: [],
-  //   outputs: [null],
-  // },
-  // "overlay": {
-  //   id: "overlay",
-  //   name: "Crop",
-  //   x: 369,
-  //   y: 69,
-  //   inputs: [null, null],
-  //   outputs: [null],
-  // },
-  // "wildcard": {
-  //   id: "wildcard",
-  //   name: "WILDCARD!",
-  //   x: 69,
-  //   y: 69,
-  //   inputs: [null, null, null, null],
-  //   outputs: [null, null, null, null],
-  // },
-  // "multiconnect": {
-  //   id: "multiconnect",
-  //   name: "Multiconnected Node",
-  //   x: 469,
-  //   y: 69,
-  //   inputs: [null, null, null, null],
-  //   outputs: [],
-  // },
-});
+const [allNodes, setAllNodes] = createStore<Record<Node["id"], Node>>({});
 
 export const updateNodes = (updates: NodeUpdate[]) => {
   setAllNodes((currentNodes) => {

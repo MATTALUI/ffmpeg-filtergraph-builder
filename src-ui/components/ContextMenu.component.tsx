@@ -9,7 +9,7 @@ import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
 import FilterSelector from "./FilterSelector.component";
 import { open as openFiles } from '@tauri-apps/plugin-dialog';
-import type { Node } from "../types";
+import type { InputNode } from "../types";
 import { addNode } from "../signals/nodes";
 import { workspaceMouseCoords } from "../signals/ui";
 
@@ -40,7 +40,8 @@ const ContextMenu: Component = () => {
     files.forEach((filePath, index) => {
       const pathSegs = filePath.split("/")
       const name = pathSegs[pathSegs.length - 1];
-      const newNode: Node = {
+      const newNode: InputNode = {
+        type: "input",
         id: crypto.randomUUID(),
         x: mouseX + (index * offsetSize),
         y: mouseY + (index * offsetSize),
