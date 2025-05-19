@@ -39,4 +39,41 @@ export const removeTempConnections = (node: Node) => {
   }]);
 }
 
+export const removeNode = (nodeId: Node["id"]) => {
+  setAllNodes((currentNodes) => {
+    const newNodes = structuredClone(currentNodes);
+    const node = newNodes[nodeId];
+    if (!node) return newNodes;
+    newNodes[nodeId] = undefined!; // forces deletion
+
+    node.inputs.forEach((input) => {
+      input.connectedNodes.forEach((connectedNodeId) => {
+        const connectedNode = newNodes[connectedNodeId];
+        if (!connectedNode) return;
+        connectedNode.outputs.forEach((output) => {
+          output.connectedNodes = output.connectedNodes.filter((id) => id !== nodeId);
+        });
+        connectedNode.inputs.forEach((input) => {
+          input.connectedNodes = input.connectedNodes.filter((id) => id !== nodeId);
+        });
+      });
+    });
+
+    node.outputs.forEach((output) => {
+      output.connectedNodes.forEach((connectedNodeId) => {
+        const connectedNode = newNodes[connectedNodeId];
+        if (!connectedNode) return;
+        connectedNode.outputs.forEach((output) => {
+          output.connectedNodes = output.connectedNodes.filter((id) => id !== nodeId);
+        });
+        connectedNode.inputs.forEach((input) => {
+          input.connectedNodes = input.connectedNodes.filter((id) => id !== nodeId);
+        });
+      });
+    });
+
+    return newNodes;
+  });
+}
+
 export { allNodes };

@@ -9,6 +9,7 @@ import {
   createStore,
 } from "solid-js/store";
 import type {
+  ExtendedContextMenuEvent,
   MouseDownValues,
   Node,
 } from "../types";
@@ -191,6 +192,14 @@ const Node: Component<INodeProps> = (
     }
   });
 
+  const emitContextMenu = (event: ExtendedContextMenuEvent) => {
+    // If we ever run into issues where the node isn't being picked up by the
+    // highest level event handler because of propagation issues, we'll need to
+    // look into a new workflow where we call stopImmediatePropagation on the
+    // event and then dispatch a new event that has the node as the detail.
+    event.node = currentNode();
+  }
+
   return (
     <div
       id={`node-${currentNode().id}`}
@@ -200,6 +209,7 @@ const Node: Component<INodeProps> = (
         top: `${currentNode().y}px`,
       }}
       onMouseDown={handleMouseDown}
+      onContextMenu={emitContextMenu}
     >
       <div class={styles.nodeContent}>
         <div class={styles.nodeName}>

@@ -9,22 +9,24 @@ import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
 import FilterSelector from "./FilterSelector.component";
 import { open as openFiles } from '@tauri-apps/plugin-dialog';
-import type { InputNode } from "../types";
-import { addNode } from "../signals/nodes";
+import type { ExtendedContextMenuEvent, InputNode, Node } from "../types";
+import { addNode, removeNode } from "../signals/nodes";
 import { workspaceMouseCoords } from "../signals/ui";
 
 const ContextMenu: Component = () => {
   const [isOpen, setIsOpen] = createSignal(false);
   const [anchor, setAnchor] = createSignal({ x: 0, y: 0 });
+  const [contextNode, setContextNode] = createSignal<Node | null>(null);
 
   const close = () => setIsOpen(false);
   const open = () => setIsOpen(true);
 
-  const handleContextMenu = (event: MouseEvent) => {
+  const handleContextMenu = (event: ExtendedContextMenuEvent) => {
     if (event.ctrlKey) return;
     event.preventDefault();
     event.stopPropagation();
     setAnchor({ x: event.clientX, y: event.clientY });
+    setContextNode(event.node || null);
     open();
   }
 
@@ -55,6 +57,13 @@ const ContextMenu: Component = () => {
     close();
   }
 
+  const deleteNode = () => {
+    const node = contextNode();
+    if (!node) return;
+    removeNode(node.id);
+    close();
+  }
+
   onMount(() => {
     document.addEventListener("contextmenu", handleContextMenu);
   });
@@ -77,7 +86,7 @@ const ContextMenu: Component = () => {
             left: `${anchor().x}px`,
           }}
         >
-          <div class={styles.menuOption}>
+          <div class={cn(styles.menuOption, styles.disabled)}>
             Save
           </div>
           <div
@@ -95,13 +104,21 @@ const ContextMenu: Component = () => {
               />
             </div>
           </div>
-          <div class={cn(styles.menuOption, styles.disabled)}>
+          <Show when={contextNode()}>
+            <div
+              class={styles.menuOption}
+              onClick={deleteNode}
+            >
+              Delete Node
+            </div>
+          </Show>
+          {/* <div class={cn(styles.menuOption, styles.disabled)}>
             Delete the World
             <div class={styles.subMenu}>
               Do it!
             </div>
-          </div>
-          <div class={cn(styles.menuOption)}>
+          </div> */}
+          {/* <div class={cn(styles.menuOption)}>
             Sub Menu Test
             <div class={styles.subMenu}>
               <div class={cn(styles.menuOption)}>
@@ -120,7 +137,7 @@ const ContextMenu: Component = () => {
                 3
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </Show>

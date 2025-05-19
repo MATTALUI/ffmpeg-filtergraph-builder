@@ -90,3 +90,7 @@ export interface IAPIService {
    */
   getFilePreview (filePath: string): APIServiceResponse<string>;
 };
+
+export type ExtendedContextMenuEvent = MouseEvent & {
+  node?: Node;
+}
