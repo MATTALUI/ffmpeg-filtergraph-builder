@@ -1,8 +1,9 @@
 use futures::future::join_all;
 use regex::Regex;
-use serde::Serialize;
-use std::process::{Command, Output};
+use std::process::{Command};
 use std::fs;
+use serde::Serialize;
+use tauri::{AppHandle, Manager};
 use base64;
 
 #[derive(Serialize, Debug, Clone)]
@@ -35,7 +36,16 @@ fn get_file_preview(file_path: & str) -> String {
 }
 
 #[tauri::command]
-async fn get_all_filters() -> String {
+async fn get_all_filters(app: AppHandle) -> String {
+    let data_path = app.path().local_data_dir().unwrap().join(app.config().identifier.clone());
+    fs::create_dir_all(&data_path).unwrap();
+    let filters_path = data_path.join("filters.cache.json");
+    println!("filters_path: {:?}", filters_path);
+    if filters_path.exists() {
+        let filters = std::fs::read_to_string(filters_path).unwrap();
+        return filters;
+    }
+
     let re = Regex::new(r"^[T.][S.][C.]\s+[^=]\S+\s+\S+\s+.+$").unwrap();
     let output_bytes = Command::new("ffmpeg")
         .arg("-filters")
@@ -68,7 +78,9 @@ async fn get_all_filters() -> String {
         }
     }
     let filters = join_all(futures).await;
-    return serde_json::to_string(&filters).unwrap();
+    let filters_json = serde_json::to_string(&filters).unwrap();
+    fs::write(filters_path, &filters_json).unwrap();
+    return filters_json
 }
 
 async fn get_filter_details(filter: FFMPEGFilter) -> FFMPEGFilter {

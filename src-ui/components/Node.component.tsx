@@ -32,15 +32,6 @@ interface IPreviewStore {
   previewUrl: string | null;
 };
 
-function base64FromUint8Array(uint8array: Uint8Array) {
-  let binary = '';
-  const len = uint8array.length;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(uint8array[i]);
-  }
-  return btoa(binary);
-}
-
 const Node: Component<INodeProps> = (
   props: INodeProps,
 ) => {
