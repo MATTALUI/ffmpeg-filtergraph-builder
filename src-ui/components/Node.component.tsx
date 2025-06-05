@@ -172,16 +172,32 @@ const Node: Component<INodeProps> = (
     if (previewFile !== previewData.loadedFileName && previewFile) {
       updatePreviewData({ ...previewData, loading: true });
       const cachedData = loadHash[previewFile];
-      let previewUrl;
+      let previewUrl: string;
       if (cachedData) {
         previewUrl = cachedData;
+      } else if (currentNode().type === "output") {
+        try {
+          const response = await fetch(previewFile);
+          const blob = await response.blob();
+          const reader = new FileReader();
+          previewUrl = await new Promise((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          console.log(previewUrl);
+          loadHash[previewFile] = previewUrl;
+        } catch (err) {
+          console.error("Failed to load preview image:", err);
+          throw new Error("Failed to load preview image");
+        }
       } else {
         const previewResponse = await APIService.getFilePreview(previewFile);
         if (previewResponse.success) {
           previewUrl = previewResponse.data;
           loadHash[previewFile] = previewUrl;
         } else {
-          console.error(previewResponse)
+          console.error(previewResponse);
+          throw new Error("Failed to load preview image");
         }
       }
       updatePreviewData({

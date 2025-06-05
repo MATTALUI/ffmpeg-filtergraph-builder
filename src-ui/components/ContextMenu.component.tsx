@@ -8,8 +8,8 @@ import {
 import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
 import FilterSelector from "./FilterSelector.component";
-import { open as openFiles } from '@tauri-apps/plugin-dialog';
-import type { ExtendedContextMenuEvent, InputNode, Node } from "../types";
+import { open as openFiles, save as saveFile } from '@tauri-apps/plugin-dialog';
+import type { ExtendedContextMenuEvent, InputNode, Node, OutputNode } from "../types";
 import { addNode, removeNode } from "../signals/nodes";
 import { workspaceMouseCoords } from "../signals/ui";
 
@@ -57,6 +57,26 @@ const ContextMenu: Component = () => {
     close();
   }
 
+  const addOutputFile = async () => {
+    const filePath = await saveFile();
+    if (!filePath) return;
+    console.log(filePath);
+    const { x, y } = workspaceMouseCoords();
+    const name = filePath.split("/").pop() || "output";
+    const newNode: OutputNode = {
+      type: "output",
+      id: crypto.randomUUID(),
+      x,
+      y,
+      name,
+      inputs: [{ type: "video", connectedNodes: [], name: "default" }],
+      outputs: [],
+      preview: "/icon.png",
+    }
+    addNode(newNode);
+    close();
+  }
+
   const deleteNode = () => {
     const node = contextNode();
     if (!node) return;
@@ -95,6 +115,13 @@ const ContextMenu: Component = () => {
           >
             {/* This will need some updates to support a web service */}
             Add Input File...
+          </div>
+          <div
+            class={styles.menuOption}
+            onClick={addOutputFile}
+          >
+            {/* This will need some updates to support a web service */}
+            Add Output File...
           </div>
           <div class={styles.menuOption}>
             Add Filter...
