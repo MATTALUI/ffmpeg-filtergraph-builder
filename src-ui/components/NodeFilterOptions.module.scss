@@ -1,0 +1,13 @@
+// .option {
+//     display: flex;
+
+//     &>* {
+//         flex: 1;
+//     }
+// }
+
+.options {
+    display: grid;
+    grid-template-columns: auto 100px;
+    gap: 0.125rem;
+}

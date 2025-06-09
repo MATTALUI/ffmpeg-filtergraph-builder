@@ -1,0 +1,15 @@
+@mixin baseButton {
+    border: none;
+    outline: none;
+    background-color: white;
+    border-radius: 3px;
+    width: 100%;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+
+    &:hover {
+        opacity: 0.69;
+    }
+}

@@ -26,6 +26,7 @@ export type OutputNode = BaseNode & {
 
 export type FilterNode = BaseNode & {
   type: "filter";
+  filter: FFMPEGFilter;
 };
 
 export type Node = InputNode | OutputNode | FilterNode;
@@ -42,6 +43,22 @@ export type FFMPEGFilterInputOutput = {
   stream_type: "video" | "audio";
 };
 
+export type FFMPEGFilterOptionValue = {
+  name: string;
+  value: string;
+  stream_support: string;
+};
+
+export type FFMPEGFilterOption = {
+  name: string;
+  type_name: string;
+  description: string;
+  stream_support: string;
+  values: FFMPEGFilterOptionValue[];
+  default: string;
+  value: string;
+};
+
 export type FFMPEGFilter = {
   name: string;
   timeline_support: boolean;
@@ -50,6 +67,7 @@ export type FFMPEGFilter = {
   description: string;
   inputs: FFMPEGFilterInputOutput[];
   outputs: FFMPEGFilterInputOutput[];
+  options: FFMPEGFilterOption[];
 };
 
 export type APIServiceBase = {
@@ -88,7 +106,7 @@ export interface IAPIService {
   /**
    * 
    */
-  getFilePreview (filePath: string): APIServiceResponse<string>;
+  getFilePreview(filePath: string): APIServiceResponse<string>;
 };
 
 export type ExtendedContextMenuEvent = MouseEvent & {

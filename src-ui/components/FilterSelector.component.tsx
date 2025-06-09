@@ -41,8 +41,10 @@ const FilterSelector: Component<IFilterSelectorProps> = (
   const noSearchResult = () => filterSearchResults().displayed.length === 0;
 
   const addNewFilter = (filter: FFMPEGFilter) => {
+    console.log(filter);
     const newNode: FilterNode = {
       type: "filter",
+      filter,
       id: crypto.randomUUID(),
       name: filter.name,
       inputs: filter.inputs.map((input) => ({
@@ -55,6 +57,7 @@ const FilterSelector: Component<IFilterSelectorProps> = (
         name: output.name,
         connectedNodes: [],
       })),
+
       ...workspaceMouseCoords(),
     };
     addNode(newNode);

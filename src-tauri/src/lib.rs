@@ -26,6 +26,8 @@ struct FFMPEGFilterOption {
     description: String,
     stream_support: String,
     values: Vec<FFMPEGFilterOptionValue>,
+    default: String,
+    value: String,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -66,6 +68,7 @@ async fn get_all_filters(app: AppHandle) -> String {
         let filters = std::fs::read_to_string(filters_path).unwrap();
         return filters;
     }
+    println!("Calculating filters: START");
 
     let re = Regex::new(r"^[T.][S.][C.]\s+[^=]\S+\s+\S+\s+.+$").unwrap();
     let output_bytes = Command::new("ffmpeg")
@@ -102,7 +105,18 @@ async fn get_all_filters(app: AppHandle) -> String {
     let filters = join_all(futures).await;
     let filters_json = serde_json::to_string(&filters).unwrap();
     fs::write(filters_path, &filters_json).unwrap();
+    println!("Calculating filters: COMPLETE");
     return filters_json;
+}
+
+fn extract_default_value(line: &str) -> String {
+    let re = regex::Regex::new(r#"\(default ([^)\"]+|\"[^\"]+\")\)"#).unwrap();
+    if let Some(caps) = re.captures(line) {
+        let val = caps.get(1).unwrap().as_str();
+        val.trim_matches('"').to_string()
+    } else {
+        String::new()
+    }
 }
 
 async fn get_filter_details(filter: FFMPEGFilter) -> FFMPEGFilter {
@@ -143,15 +157,16 @@ async fn get_filter_details(filter: FFMPEGFilter) -> FFMPEGFilter {
             };
             // println!("{:?}", &output);
             filter.outputs.push(output);
-        } else if line == format!("{} AVOptions:", filter.name) {
-            collection_type = "options";
+        // } else if line == format!("{} AVOptions:", filter.name) {
+        //     collection_type = "options";
             // println!("collecting {}", collection_type);
             // println!("\n\n\n\n\n\nNew Option: {:?}", line);
         } else if line.ends_with("AVOptions:") {
             // There are often other options within the filters options. Until I
             // figure out what they're for we can just break when we get to them
             // because they're not needed for the scope we're at right now.
-            break;
+            // break;
+            collection_type = "options";
         } else if collection_type == "options" && line != "" {
             let entries: Vec<&str> = line.split_whitespace().collect();
             // println!("OPTION LINE: {:?}", line);
@@ -159,12 +174,17 @@ async fn get_filter_details(filter: FFMPEGFilter) -> FFMPEGFilter {
 
             if entries[1].trim().starts_with("<") {
                 // println!("NEW OPTION");
+                let description = entries[3..].join(" ");
+                let default_value = extract_default_value(&description);
                 let option = FFMPEGFilterOption {   
                     name: entries[0].to_string(),
                     type_name: entries[1].to_string(),
-                    description: entries[3..].join(" "),
+                    description: description,
                     stream_support: entries[2].to_string(),
                     values: Vec::new(),
+                    default: default_value.clone(),
+                    value: default_value.clone(),
+
                 };
                 filter.options.push(option);
             } else {

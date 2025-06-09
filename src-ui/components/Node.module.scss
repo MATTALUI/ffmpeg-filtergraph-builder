@@ -1,3 +1,5 @@
+@import "../common.module.scss";
+
 $socketSize: 0.75rem;
 $socketColor: #bdc182;
 
@@ -5,7 +7,6 @@ $socketColor: #bdc182;
   color: white;
   position: absolute;
   width: 250px;
-  min-height: 100px;
   background-color: #00000077;
   border-radius: 0.25rem;
   border: 2px solid transparent;
@@ -13,6 +14,7 @@ $socketColor: #bdc182;
   transition: color 250ms, border-color 250ms, background-color 250ms;
   z-index: 5;
   user-select: none;
+  padding-bottom: 0.25rem;
 
   & * {
     user-select: none;
@@ -79,6 +81,28 @@ $socketColor: #bdc182;
   }
 }
 
+.section {
+  font-size: 0.875rem;
+  padding-bottom: 0.25rem;
+
+  .sectionHeader {
+    padding: $socketSize/2 $socketSize;
+    user-select: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .sectionContent {
+    padding: $socketSize/2 $socketSize;
+  }
+}
+
+.contentContainer {
+  padding: 0.125rem 0.25rem;
+}
 
 .loader {
   width: 20px;
@@ -89,6 +113,10 @@ $socketColor: #bdc182;
   display: inline-block;
   box-sizing: border-box;
   animation: rotation 1s linear infinite;
+}
+
+.addOptionButton {
+  @include baseButton;
 }
 
 @keyframes rotation {

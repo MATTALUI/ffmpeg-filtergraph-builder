@@ -10,6 +10,7 @@ import {
 } from "solid-js/store";
 import type {
   ExtendedContextMenuEvent,
+  FilterNode,
   MouseDownValues,
   Node,
 } from "../types";
@@ -19,6 +20,7 @@ import cn from "classnames";
 import { allNodes, removeTempConnections, updateNodes } from "../signals/nodes";
 import { cloneDeep, uniq } from "lodash";
 import APIService from "../services";
+import NodeFilterOptions from "./NodeFilterOptions";
 
 const loadHash: Record<string, string> = {};
 
@@ -184,7 +186,6 @@ const Node: Component<INodeProps> = (
             reader.onloadend = () => resolve(reader.result as string);
             reader.readAsDataURL(blob);
           });
-          console.log(previewUrl);
           loadHash[previewFile] = previewUrl;
         } catch (err) {
           console.error("Failed to load preview image:", err);
@@ -240,6 +241,9 @@ const Node: Component<INodeProps> = (
               src={previewData.previewUrl!}
             />
           </div>
+        </Show>
+        <Show when={props.node.type === "filter" && props.node.filter.options.length}>
+          <NodeFilterOptions node={props.node as FilterNode} />
         </Show>
       </div>
       <div class={cn(styles.sockets, styles.inputs)}>
