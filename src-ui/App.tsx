@@ -1,25 +1,15 @@
-import Toolbar from "./components/Toolbar.component";
-import "./App.css";
-import PanContainer from "./components/PanContainer.component";
-import ContextMenu from "./components/ContextMenu.component";
-import { onCleanup, onMount } from "solid-js";
-import { watchMouse } from "./signals/ui";
+import { useState } from 'react'
 
 function App() {
-  onMount(() => {
-    document.addEventListener("mousemove", watchMouse);
-  });
-  onCleanup(() => {
-    document.removeEventListener("mousemove", watchMouse);
-  });
+  const [count, setCount] = useState(0)
 
   return (
-    <>
-      <ContextMenu />
-      <Toolbar />
-      <PanContainer />
-    </>
-  );
+    <div>
+      Here is the UI!!!
+      {count}
+      <button onClick={() => setCount(count + 1)}>Click me</button>
+    </div>
+  )
 }
 
-export default App;
+export default App
