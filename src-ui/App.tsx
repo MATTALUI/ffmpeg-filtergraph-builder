@@ -1,14 +1,15 @@
-import { useState } from 'react'
+import './App.css'
+import ContextMenu from './components/ContextMenu.component'
+import PanContainer from './components/PanContainer.component'
+import Toolbar from './components/Toolbar.component'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div>
-      Here is the UI!!!
-      {count}
-      <button onClick={() => setCount(count + 1)}>Click me</button>
-    </div>
+    <>
+      <ContextMenu />
+      <Toolbar />
+      <PanContainer />
+    </>
   )
 }
 

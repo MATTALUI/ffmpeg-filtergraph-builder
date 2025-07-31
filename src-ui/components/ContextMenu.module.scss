@@ -1,0 +1,70 @@
+$menuWidth: 200px;
+$borderRadius: 0.25rem;
+$backgroundColor: white;
+$hoverColor: lightblue;
+
+.backdrop {
+    // background-color: pink;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 50;
+}
+
+.menuContainer {
+    background-color: $backgroundColor;
+    position: fixed;
+    min-width: $menuWidth;
+    min-height: 30px;
+    border-radius: $borderRadius;
+}
+
+.subMenu {
+    display: none;
+    background-color: $backgroundColor;
+    min-width: $menuWidth;
+    // padding: 0.5em 1rem;
+    border-radius: 0 $borderRadius $borderRadius 0;
+    position: absolute;
+    left: $menuWidth;
+    top: 0;
+
+    &.open {
+        display: block;
+    }
+}
+
+.menuOption {
+    padding: 0.5em 1rem;
+    position: relative;
+    cursor: pointer;
+
+    &:first-child {
+        border-radius: $borderRadius $borderRadius 0 0;
+    }
+
+    &:last-child {
+        border-radius: 0 0 $borderRadius $borderRadius;
+    }
+
+    &:not(:last-child) {
+        border-bottom: 1px solid #dddddd;
+    }
+
+    &:hover {
+        background-color: $hoverColor;
+
+        &>.subMenu {
+            display: block;
+        }
+    }
+
+    &.disabled {
+        color: lighten(black, 30%);
+        pointer-events: none;
+        background-color: darken($backgroundColor, 20%);
+        cursor: not-allowed;
+    }
+}
