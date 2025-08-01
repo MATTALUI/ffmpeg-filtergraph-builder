@@ -1,5 +1,6 @@
 import type {
   MouseEvent as ReactMouseEvent,
+  BaseSyntheticEvent,
 } from "react";
 
 export type ConnectionTypes = "audio" | "video" | "dynamic" | "sink";
@@ -115,4 +116,7 @@ export interface IAPIService {
 
 export type ExtendedContextMenuEvent<T=Element, E=ReactMouseEvent> = ReactMouseEvent<T, E> & {
   node?: Node;
+  nativeEvent: BaseSyntheticEvent & {
+    node?: Node;
+  };
 }

@@ -215,7 +215,7 @@ const Node: React.FC<INodeProps> = ({
     // highest level event handler because of propagation issues, we'll need to
     // look into a new workflow where we call stopImmediatePropagation on the
     // event and then dispatch a new event that has the node as the detail.
-    event.node = node;
+    event.nativeEvent.node = node;
   }
 
   return (
@@ -250,6 +250,7 @@ const Node: React.FC<INodeProps> = ({
       <div className={cn(styles.sockets, styles.inputs)}>
         {node.inputs.map((nodeInput, index) => (
           <div
+            key={`${node.id}-input-${index}`}
             className={cn(styles.socket, !!nodeInput.connectedNodes.length && styles.connected)}
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
           />
@@ -258,6 +259,7 @@ const Node: React.FC<INodeProps> = ({
       <div className={cn(styles.sockets, styles.outputs)}>
         {node.outputs.map((nodeOutput, index) => (
           <div
+            key={`${node.id}-output-${index}`}
             className={cn(styles.socket, !!nodeOutput.connectedNodes.length && styles.connected)}
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
           />

@@ -1,22 +1,15 @@
-// import {
-//   type Component,
-//   Show,
-//   createSignal,
-//   onCleanup,
-//   onMount,
-// } from "solid-js";
-import React, { useState, useCallback, useEffect } from "react"
+import React, { useState, useCallback, useEffect, MouseEventHandler } from "react"
 import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
-// import FilterSelector from "./FilterSelector.component";
 import { open as openFiles, save as saveFile } from '@tauri-apps/plugin-dialog';
 import type { ExtendedContextMenuEvent, InputNode, Node, OutputNode } from "../types";
 import { useCallbackRef } from "../hooks/useCallbackRef";
 import FilterSelector from "./FilterSelector.component";
-// import { addNode, removeNode } from "../signals/nodes";
+import { useNodes } from "../context/nodes";
 // import { workspaceMouseCoords } from "../signals/ui";
 
 const ContextMenu: React.FC = () => {
+  const { addNodes, removeNodes } = useNodes();
   const [isOpen, setIsOpen] = useState(false);
   const [anchor, setAnchor] = useState({ x: 0, y: 0 });
   const [contextNode, setContextNode] = useState<Node | null>(null);
@@ -24,21 +17,21 @@ const ContextMenu: React.FC = () => {
   const close = () => setIsOpen(false);
   const open = () => setIsOpen(true);
 
-  const handleContextMenu = useCallbackRef((event: ExtendedContextMenuEvent) => {
+  const handleContextMenu = useCallback((event: ExtendedContextMenuEvent<Document, React.MouseEvent>) => {
     if (event.ctrlKey) return;
     event.preventDefault();
     event.stopPropagation();
     setAnchor({ x: event.clientX, y: event.clientY });
     setContextNode(event.node || null);
     open();
-  })
+  }, [setAnchor, setContextNode, open]);
 
-  const stopProp = (event: React.MouseEvent) => {
+  const stopProp = useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
-  };
+  }, []);
 
-  const addMediaInputs = async () => {
+  const addMediaInputs = useCallback(async () => {
     const files = await openFiles({ multiple: true, directory: false }) || [];
     const { x: mouseX, y: mouseY } = { x: 0, y: 0 }; // workspaceMouseCoords();
     const offsetSize = 25;
@@ -55,12 +48,12 @@ const ContextMenu: React.FC = () => {
         outputs: [{ type: "video", connectedNodes: [], name: "default" }],
         preview: filePath,
       };
-      // addNode(newNode);
+      addNodes([newNode]);
     });
     close();
-  }
+  }, [close, addNodes]);
 
-  const addOutputFile = async () => {
+  const addOutputFile = useCallback(async () => {
     const filePath = await saveFile();
     if (!filePath) return;
     console.log(filePath);
@@ -76,16 +69,15 @@ const ContextMenu: React.FC = () => {
       outputs: [],
       preview: "/icon.png",
     }
-    // addNode(newNode);
+    addNodes([newNode]);
     close();
-  }
+  }, [close, addNodes]);
 
-  const deleteNode = () => {
-    // const node = contextNode();
-    // if (!node) return;
-    // removeNode(node.id);
+  const deleteNode = useCallback(() => {
+    if (!contextNode) return;
+    removeNodes([contextNode.id]);
     close();
-  }
+  }, [close, removeNodes, contextNode?.id]);
 
   useEffect(() => {
     document.addEventListener("contextmenu", handleContextMenu);
@@ -93,14 +85,6 @@ const ContextMenu: React.FC = () => {
       document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, [handleContextMenu]);
-
-  // onMount(() => {
-  //   document.addEventListener("contextmenu", handleContextMenu);
-  // });
-
-  // onCleanup(() => {
-  //   document.removeEventListener("contextmenu", handleContextMenu);
-  // });
 
   return (
     <>

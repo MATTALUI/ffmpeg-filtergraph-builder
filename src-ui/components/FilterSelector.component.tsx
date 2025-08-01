@@ -1,19 +1,13 @@
-// import {
-//   type Component,
-//   createSignal,
-//   For,
-//   Show,
-// } from "solid-js";
+import React, { useMemo, useState } from "react";
 import { debounce } from "lodash";
 import styles from "./FilterSelector.module.scss";
 // import { allFilters } from "../signals/filters";
 import type {
   FFMPEGFilter,
-  // FilterNode,
+  FilterNode,
 } from "../types";
-import React, { useMemo, useState } from "react";
+import { useNodes } from "../context/nodes";
 // import { workspaceMouseCoords } from "../signals/ui";
-// import { addNode } from "../signals/nodes";
 
 interface IFilterSelectorProps {
   closeMenu: () => void;
@@ -24,6 +18,7 @@ const maxSearchResultsCount = 7;
 const FilterSelector: React.FC<IFilterSelectorProps> = (
   props: IFilterSelectorProps,
 ) => {
+  const { addNodes } = useNodes();    
   const allFilters: FFMPEGFilter[] = [];
   const loading = true
   const [filterSearch, setFilterSearch] = useState("");
@@ -47,26 +42,26 @@ const FilterSelector: React.FC<IFilterSelectorProps> = (
   const noSearchResult = filterSearchResults.displayed.length === 0;
 
   const addNewFilter = (filter: FFMPEGFilter) => {
-    console.log(filter);
-    // const newNode: FilterNode = {
-    //   type: "filter",
-    //   filter,
-    //   id: crypto.randomUUID(),
-    //   name: filter.name,
-    //   inputs: filter.inputs.map((input) => ({
-    //     type: input.stream_type,
-    //     name: input.name,
-    //     connectedNodes: [],
-    //   })),
-    //   outputs: filter.outputs.map((output) => ({
-    //     type: output.stream_type,
-    //     name: output.name,
-    //     connectedNodes: [],
-    //   })),
-
-    //   // ...workspaceMouseCoords(),
-    // };
-    // addNode(newNode);
+    const newNode: FilterNode = {
+      type: "filter",
+      filter,
+      id: crypto.randomUUID(),
+      name: filter.name,
+      inputs: filter.inputs.map((input) => ({
+        type: input.stream_type,
+        name: input.name,
+        connectedNodes: [],
+      })),
+      outputs: filter.outputs.map((output) => ({
+        type: output.stream_type,
+        name: output.name,
+        connectedNodes: [],
+      })),
+      x: 0,
+      y: 0,
+      // ...workspaceMouseCoords(),
+    };
+    addNodes([newNode]);
     setFilterSearch("");
     props.closeMenu();
   }
@@ -79,14 +74,17 @@ const FilterSelector: React.FC<IFilterSelectorProps> = (
           type="text"
           value={filterSearch}
           placeholder="Search..."
-          onKeyUp={updateSearchTerm}
+          // onKeyUp={updateSearchTerm}
+          // onChange={updateSearchTerm}
           autoCorrect="off"
           spellCheck={false}
           autoComplete="off"
+          readOnly
         />
       </div>
       {filterSearchResults.displayed.map((filter) => (
         <div
+          key={filter.name}
           className={styles.filterOption}
           onClick={() => addNewFilter(filter)}
         >

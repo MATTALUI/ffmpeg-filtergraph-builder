@@ -68,8 +68,8 @@ export const NodesContextProvider: React.FC<{ children: React.ReactNode }> = (
       nodeIds.forEach((nodeId) => {
         const node = nodes[nodeId];
         if (!node) return nodes;
-        nodes[nodeId] = undefined!; // forces deletion
-
+        delete nodes[nodeId];
+        // Remove any connections to this node
         node.inputs.forEach((input) => {
           input.connectedNodes.forEach((connectedNodeId) => {
             const connectedNode = nodes[connectedNodeId];
@@ -82,7 +82,6 @@ export const NodesContextProvider: React.FC<{ children: React.ReactNode }> = (
             });
           });
         });
-
         node.outputs.forEach((output) => {
           output.connectedNodes.forEach((connectedNodeId) => {
             const connectedNode = nodes[connectedNodeId];

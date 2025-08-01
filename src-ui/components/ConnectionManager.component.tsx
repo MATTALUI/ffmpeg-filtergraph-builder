@@ -150,8 +150,9 @@ const ConnectionManager: React.FC = () => {
 
   return (
     <div>
-      {connections.map((connection) => (
+      {connections.map((connection, index) => (
         <svg
+          key={index}
           height={connection.height}
           width={connection.width}
           style={{
