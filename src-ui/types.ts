@@ -1,3 +1,7 @@
+import type {
+  MouseEvent as ReactMouseEvent,
+} from "react";
+
 export type ConnectionTypes = "audio" | "video" | "dynamic" | "sink";
 
 export type NodeConnection = {
@@ -109,6 +113,6 @@ export interface IAPIService {
   getFilePreview(filePath: string): APIServiceResponse<string>;
 };
 
-export type ExtendedContextMenuEvent = MouseEvent & {
+export type ExtendedContextMenuEvent<T=Element, E=ReactMouseEvent> = ReactMouseEvent<T, E> & {
   node?: Node;
 }

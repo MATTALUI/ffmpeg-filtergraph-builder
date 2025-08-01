@@ -1,14 +1,15 @@
-import {
-  For,
-  createMemo,
-  createSignal,
-  onMount,
-  type Component,
-} from "solid-js";
+// import {
+//   For,
+//   createMemo,
+//   createSignal,
+//   onMount,
+//   type Component,
+// } from "solid-js";
+import React, { useState, useCallback, useEffect, useMemo } from "react"
 import { TEMPSOCKET } from "../constants";
 import type { Node } from "../types";
-import { allNodes } from "../signals/nodes";
-import { workspaceMouseCoords } from "../signals/ui";
+// import { allNodes } from "../signals/nodes";
+// import { workspaceMouseCoords } from "../signals/ui";
 
 type ConnectionSummary = {
   x: number;
@@ -19,9 +20,13 @@ type ConnectionSummary = {
   pathStrokeWidth: number;
 };
 
-const ConnectionManager: Component = () => {
-  const [hasRendered, setHasRendered] = createSignal(false);
-  onMount(() => setHasRendered(true));
+const ConnectionManager: React.FC = () => {
+  const allNodes: Record<string, Node> = {};
+  const [hasRendered, setHasRendered] = useState(false);
+  useEffect(() => {
+    setHasRendered(true);
+  }, [setHasRendered]);
+  // onMount(() => setHasRendered(true));
 
   const buildNodeConnectionSummary = (
     outputNode: Node,
@@ -91,7 +96,7 @@ const ConnectionManager: Component = () => {
     const socketYOffset =
       (segmentSize * socketIndex - 1) + (segmentSize / 2);
     const nodeY = node.y + socketYOffset;
-    const { x: mouseX, y: mouseY } = workspaceMouseCoords();
+    const { x: mouseX, y: mouseY } = { x: 0, y: 0 }; // workspaceMouseCoords();
 
     const padding = 10;
     const x = Math.min(nodeX, mouseX) - padding;
@@ -114,8 +119,8 @@ const ConnectionManager: Component = () => {
     }
   }
 
-  const connections = createMemo(() => {
-    if (!hasRendered()) return;
+  const connections = useMemo(() => {
+    if (!hasRendered) return [];
     const connections: Record<string, ConnectionSummary> = {};
     Object.values(allNodes).forEach((node) => {
       node.inputs.forEach((nodeConnection) => {
@@ -141,30 +146,28 @@ const ConnectionManager: Component = () => {
     });
 
     return Object.values(connections);
-  });
+  }, []);
 
   return (
     <div>
-      <For each={connections()}>
-        {(connection) => (
-          <svg
-            height={connection.height}
-            width={connection.width}
-            style={{
-              position: "absolute",
-              top: `${connection.y}px`,
-              left: `${connection.x}px`,
-            }}
-          >
-            <path
-              d={connection.pathD}
-              stroke="black"
-              stroke-width={`${connection.pathStrokeWidth}px`}
-              fill="transparent"
-            />
-          </svg>
-        )}
-      </For>
+      {connections.map((connection) => (
+        <svg
+          height={connection.height}
+          width={connection.width}
+          style={{
+            position: "absolute",
+            top: `${connection.y}px`,
+            left: `${connection.x}px`,
+          }}
+        >
+          <path
+            d={connection.pathD}
+            stroke="black"
+            stroke-width={`${connection.pathStrokeWidth}px`}
+            fill="transparent"
+          />
+        </svg>
+      ))}
     </div>
   );
 }

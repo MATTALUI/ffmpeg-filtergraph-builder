@@ -11,10 +11,12 @@ import type {
 import cn from "classnames";
 import styles from "./PanContainer.module.scss";
 // import { allNodes } from "../signals/nodes";
-// import ConnectionManager from "./ConnectionManager.component";
+import ConnectionManager from "./ConnectionManager.component";
 import { useCallbackRef } from "../hooks/useCallbackRef";
+import Node from "./Node.component";
 
 const PanContainer: React.FC = () => {
+  const allNodes: Record<string, Node> = {};
   const [mouseDownValues, setMouseDownValues] = useState<MouseDownValues>({
     mouseX: 0,
     mouseY: 0,
@@ -70,10 +72,13 @@ const PanContainer: React.FC = () => {
           top: `${y}px`,
         }}
       >
+        {Object.values(allNodes).map((node) => (
+          <Node node={node} />
+        ))}
         {/* <For each={Object.values(allNodes)}>
           {(node) => (<Node node={node} />)}
         </For> */}
-        {/* <ConnectionManager /> */}
+        <ConnectionManager />
       </div>
     </div>
   );
