@@ -12,6 +12,7 @@ import cn from "classnames";
 import { open as openFiles, save as saveFile } from '@tauri-apps/plugin-dialog';
 import type { ExtendedContextMenuEvent, InputNode, Node, OutputNode } from "../types";
 import { useCallbackRef } from "../hooks/useCallbackRef";
+import FilterSelector from "./FilterSelector.component";
 // import { addNode, removeNode } from "../signals/nodes";
 // import { workspaceMouseCoords } from "../signals/ui";
 
@@ -138,9 +139,9 @@ const ContextMenu: React.FC = () => {
             <div className={styles.menuOption}>
               Add Filter...
               <div className={styles.subMenu}>
-                {/* <FilterSelector
+                <FilterSelector
                   closeMenu={close}
-                /> */}
+                />
               </div>
             </div>
             {!!contextNode && (
