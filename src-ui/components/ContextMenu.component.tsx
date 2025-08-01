@@ -89,10 +89,8 @@ const ContextMenu: React.FC = () => {
 
   useEffect(() => {
     document.addEventListener("contextmenu", handleContextMenu);
-    console.log("added event listener");
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
-      console.log("removed event listener");
     };
   }, [handleContextMenu]);
 

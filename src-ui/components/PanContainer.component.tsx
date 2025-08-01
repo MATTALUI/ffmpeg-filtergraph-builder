@@ -1,22 +1,19 @@
-// import {
-//   type Component,
-//   createSignal,
-//   For,
-// } from "solid-js";
-import React, { useState, useCallback } from "react"
+import React, {
+  useState,
+  useCallback,
+} from "react"
 import type {
   MouseDownValues,
 } from "../types";
-// import Node from "./Node.component";
 import cn from "classnames";
 import styles from "./PanContainer.module.scss";
-// import { allNodes } from "../signals/nodes";
 import ConnectionManager from "./ConnectionManager.component";
 import { useCallbackRef } from "../hooks/useCallbackRef";
 import Node from "./Node.component";
+import { useNodes } from "../context/nodes";
 
 const PanContainer: React.FC = () => {
-  const allNodes: Record<string, Node> = {};
+  const { allNodes } = useNodes();
   const [mouseDownValues, setMouseDownValues] = useState<MouseDownValues>({
     mouseX: 0,
     mouseY: 0,
@@ -73,11 +70,8 @@ const PanContainer: React.FC = () => {
         }}
       >
         {Object.values(allNodes).map((node) => (
-          <Node node={node} />
+          <Node key={node.id} node={node} />
         ))}
-        {/* <For each={Object.values(allNodes)}>
-          {(node) => (<Node node={node} />)}
-        </For> */}
         <ConnectionManager />
       </div>
     </div>

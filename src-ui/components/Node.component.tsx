@@ -18,9 +18,8 @@ import type {
 import { TEMPSOCKET } from "../constants";
 import styles from "./Node.module.scss";
 import cn from "classnames";
-// import { allNodes, removeTempConnections, updateNodes } from "../signals/nodes";
+import { useNodes } from "../context/nodes";
 import { cloneDeep, uniq } from "lodash";
-// import APIService from "../services";
 import NodeFilterOptions from "./NodeFilterOptions";
 
 const loadHash: Record<string, string> = {};
@@ -35,11 +34,10 @@ interface IPreviewStore {
   previewUrl: string | null;
 };
 
-const Node: React.FC<INodeProps> = (
-  props: INodeProps,
-) => {
-  const allNodes: Record<string, Node> = {};
-  const currentNode = allNodes[props.node.id];
+const Node: React.FC<INodeProps> = ({
+  node
+}: INodeProps) => {
+  const { allNodesIndexed } = useNodes();
   const [active, setActive] = useState(false);
   const [previewData, updatePreviewData] = useState<IPreviewStore>({
     loading: false,
@@ -61,7 +59,7 @@ const Node: React.FC<INodeProps> = (
     const x = initialValues.originalX - xDiff;
     const y = initialValues.originalY - yDiff;
     // updateNodes([{
-    //   id: currentNode.id,
+    //   id: node.id,
     //   x,
     //   y,
     // }]);
@@ -70,7 +68,7 @@ const Node: React.FC<INodeProps> = (
   const attemptConnection = (event: MouseEvent) => {
     // I don't like this, but it'll get us there until I can refactor into
     // something better...
-    if (!currentNode) return;
+    if (!node) return;
     const mouseX = event.clientX;
     const mouseY = event.clientY;
     const threshold = 15;
@@ -101,26 +99,26 @@ const Node: React.FC<INodeProps> = (
     // Update the Target Node
     const targetSocketIndex = Math.max(inputIndex, outputIndex);
     const targetSocketType = inputIndex < 0 ? "outputs" : "inputs";
-    const targetNode = allNodes[nodeId];
+    const targetNode = allNodesIndexed[nodeId];
     const updatedTargetSockets = cloneDeep(targetNode[targetSocketType]);
     updatedTargetSockets[targetSocketIndex].connectedNodes =
-      uniq([...updatedTargetSockets[targetSocketIndex].connectedNodes, currentNode.id]);
+      uniq([...updatedTargetSockets[targetSocketIndex].connectedNodes, node.id]);
     updates.push({
       id: targetNode.id,
       [targetSocketType]: updatedTargetSockets,
     });
     // Update the Original Node
-    const outputSocket = currentNode.outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
-    const inputSocket = currentNode.inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+    const outputSocket = node.outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+    const inputSocket = node.inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
     const socketType = !!inputSocket ? "inputs" : "outputs";
     const socketIndex = !!inputSocket
-      ? currentNode.inputs.indexOf(inputSocket)
-      : currentNode.outputs.indexOf(outputSocket!);
-    const updatedSockets = cloneDeep(currentNode[socketType]);
+      ? node.inputs.indexOf(inputSocket)
+      : node.outputs.indexOf(outputSocket!);
+    const updatedSockets = cloneDeep(node[socketType]);
     updatedSockets[socketIndex].connectedNodes =
       uniq([...updatedSockets[socketIndex].connectedNodes.filter(id => id !== TEMPSOCKET), targetNode.id]);
     updates.push({
-      id: currentNode.id,
+      id: node.id,
       [socketType]: updatedSockets,
     });
     // updateNodes(updates);
@@ -138,8 +136,8 @@ const Node: React.FC<INodeProps> = (
     setMouseDownValues({
       mouseX: event.clientX,
       mouseY: event.clientY,
-      originalX: currentNode.x,
-      originalY: currentNode.y,
+      originalX: node.x,
+      originalY: node.y,
     });
     setActive(true);
     document.addEventListener("mousemove", handleMouseMove);
@@ -148,7 +146,7 @@ const Node: React.FC<INodeProps> = (
 
   const handleSocketMouseUp = (event: MouseEvent) => {
     attemptConnection(event);
-    // removeTempConnections(currentNode);
+    // removeTempConnections(node);
     document.removeEventListener("mouseup", handleSocketMouseUp);
   }
 
@@ -159,10 +157,10 @@ const Node: React.FC<INodeProps> = (
   ) => {
     event.stopPropagation();
     event.preventDefault();
-    const newSockets = cloneDeep(currentNode[socketType]);
+    const newSockets = cloneDeep(node[socketType]);
     newSockets[index].connectedNodes.push(TEMPSOCKET);
     // updateNodes([{
-    //   id: currentNode.id,
+    //   id: node.id,
     //   [socketType]: newSockets,
     // }]);
     document.addEventListener("mouseup", handleSocketMouseUp);
@@ -173,14 +171,14 @@ const Node: React.FC<INodeProps> = (
   //   // work because updating nodes will cause complete rerender of the node so
   //   // this state will be cleared out and useless to check. There are going to
   //   // be performance issues with this, but it's a necessary evil for now.
-  //   const previewFile = currentNode.preview || null;
+  //   const previewFile = node.preview || null;
   //   if (previewFile !== previewData.loadedFileName && previewFile) {
   //     updatePreviewData({ ...previewData, loading: true });
   //     const cachedData = loadHash[previewFile];
   //     let previewUrl: string;
   //     if (cachedData) {
   //       previewUrl = cachedData;
-  //     } else if (currentNode.type === "output") {
+  //     } else if (node.type === "output") {
   //       try {
   //         const response = await fetch(previewFile);
   //         const blob = await response.blob();
@@ -217,23 +215,23 @@ const Node: React.FC<INodeProps> = (
     // highest level event handler because of propagation issues, we'll need to
     // look into a new workflow where we call stopImmediatePropagation on the
     // event and then dispatch a new event that has the node as the detail.
-    event.node = currentNode;
+    event.node = node;
   }
 
   return (
     <div
-      id={`node-${currentNode.id}`}
+      id={`node-${node.id}`}
       className={cn(styles.node, active && styles.active)}
       style={{
-        left: `${currentNode.x}px`,
-        top: `${currentNode.y}px`,
+        left: `${node.x}px`,
+        top: `${node.y}px`,
       }}
       onMouseDown={handleMouseDown}
       onContextMenu={emitContextMenu as unknown as MouseEventHandler<HTMLDivElement>}
     >
       <div className={styles.nodeContent}>
         <div className={styles.nodeName}>
-          <span>{currentNode.name}</span>
+          <span>{node.name}</span>
           {loading && (
             <div className={styles.loader} />
           )}
@@ -245,12 +243,12 @@ const Node: React.FC<INodeProps> = (
             />
           </div>
         )}
-        {props.node.type === "filter" && props.node.filter.options.length && (
-          <NodeFilterOptions node={props.node as FilterNode} />
+        {node.type === "filter" && node.filter.options.length && (
+          <NodeFilterOptions node={node as FilterNode} />
         )}
       </div>
       <div className={cn(styles.sockets, styles.inputs)}>
-        {currentNode.inputs.map((nodeInput, index) => (
+        {node.inputs.map((nodeInput, index) => (
           <div
             className={cn(styles.socket, !!nodeInput.connectedNodes.length && styles.connected)}
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
@@ -258,7 +256,7 @@ const Node: React.FC<INodeProps> = (
         ))}
       </div>
       <div className={cn(styles.sockets, styles.outputs)}>
-        {currentNode.outputs.map((nodeOutput, index) => (
+        {node.outputs.map((nodeOutput, index) => (
           <div
             className={cn(styles.socket, !!nodeOutput.connectedNodes.length && styles.connected)}
             onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
