@@ -1,13 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { debounce } from "lodash";
+import React, { useCallback, useMemo, useState } from "react";
 import styles from "./FilterSelector.module.scss";
-// import { allFilters } from "../signals/filters";
+import { useFilters } from "../hooks/filters";
 import type {
   FFMPEGFilter,
   FilterNode,
 } from "../types";
 import { useNodes } from "../context/nodes";
-// import { workspaceMouseCoords } from "../signals/ui";
+import { useUI } from "../context/ui";
 
 interface IFilterSelectorProps {
   closeMenu: () => void;
@@ -19,25 +18,24 @@ const FilterSelector: React.FC<IFilterSelectorProps> = (
   props: IFilterSelectorProps,
 ) => {
   const { addNodes } = useNodes();    
-  const allFilters: FFMPEGFilter[] = [];
-  const loading = true
+  const { filters, isLoading } = useFilters();
+  const { workspaceMouseCoords } = useUI();
   const [filterSearch, setFilterSearch] = useState("");
 
-  const updateSearchTerm = debounce((event: React.KeyboardEvent<HTMLInputElement>) => {
-    const target = event.target as HTMLInputElement;
+  const updateSearchTerm = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const target = event.target;
     setFilterSearch(target.value);
-  }, 200);
+  }, []);
 
   const filterSearchResults = useMemo(() => {
-    const filters: FFMPEGFilter[] = [];
-    const searchedFilters = allFilters
+    const searchedFilters = filters
       .filter(f => f.name.toLowerCase().includes(filterSearch))
       .sort((a, b) => (a.name.toLowerCase().localeCompare(b.name.toLowerCase())));
     return {
       displayed: searchedFilters.slice(0, maxSearchResultsCount),
       more: Math.max(0, searchedFilters.length - maxSearchResultsCount),
     };
-  }, []);
+  }, [filters, filterSearch]);
 
   const noSearchResult = filterSearchResults.displayed.length === 0;
 
@@ -57,9 +55,7 @@ const FilterSelector: React.FC<IFilterSelectorProps> = (
         name: output.name,
         connectedNodes: [],
       })),
-      x: 0,
-      y: 0,
-      // ...workspaceMouseCoords(),
+      ...workspaceMouseCoords,
     };
     addNodes([newNode]);
     setFilterSearch("");
@@ -74,12 +70,10 @@ const FilterSelector: React.FC<IFilterSelectorProps> = (
           type="text"
           value={filterSearch}
           placeholder="Search..."
-          // onKeyUp={updateSearchTerm}
-          // onChange={updateSearchTerm}
+          onChange={updateSearchTerm}
           autoCorrect="off"
           spellCheck={false}
           autoComplete="off"
-          readOnly
         />
       </div>
       {filterSearchResults.displayed.map((filter) => (
@@ -91,13 +85,13 @@ const FilterSelector: React.FC<IFilterSelectorProps> = (
           {filter.name}
         </div>
       ))}
-      {loading && (
+      {isLoading && (
         <div className={styles.loaderContainer}>
           <div className={styles.loader} />
           <span>Loading Filters</span>
         </div>
       )}
-      {noSearchResult && !loading && (
+      {noSearchResult && !isLoading && (
         <div className={styles.noResults}>
           No Filters Available {!!filterSearch && `For Search "${filterSearch}"`}
         </div>

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// import { Component, createSignal, For, Show } from "solid-js";
 import type { FilterNode } from "../types";
 import nodeStyles from "./Node.module.scss";
 import styles from "./NodeFilterOptions.module.scss";
@@ -31,8 +30,8 @@ const NodeFilterOptions: React.FC<INodeFilterOptionsProps> = (
       </div>
       {!collapsed && (
         <div className={cn(nodeStyles.sectionContent, styles.options)}>
-          {props.node.filter.options.map((option) => (
-            <>
+          {props.node.filter.options.map((option, index) => (
+            <React.Fragment key={option.name + index}>
               <span>{option.name}</span>
               {!!option.values.length ? (
                 <select
@@ -41,16 +40,18 @@ const NodeFilterOptions: React.FC<INodeFilterOptionsProps> = (
                 >
                   {option.values.map((value) => (
                     <option
+                      key={value.value}
                       value={value.value}
+                      
                     >
                       {value.name}
                     </option>
                   ))}
                 </select>
               ) : (
-                <input type="text" value={option.value} />
+                <input type="text" value={option.value} readOnly/>
               )}
-            </>
+            </React.Fragment>
           ))}
         </div>
       )}
