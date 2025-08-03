@@ -1,14 +1,9 @@
-// import {
-//   type Component,
-//   createEffect,
-//   createSignal,
-//   For,
-//   Show,
-// } from "solid-js";
-// import {
-//   createStore,
-// } from "solid-js/store";
-import React, { useState, useCallback, MouseEventHandler } from "react"
+import React, {
+  useState,
+  useCallback,
+  type MouseEventHandler,
+  useEffect,
+} from "react"
 import type {
   ExtendedContextMenuEvent,
   FilterNode,
@@ -22,6 +17,7 @@ import { useNodes } from "../context/nodes";
 import { cloneDeep, uniq } from "lodash";
 import NodeFilterOptions from "./NodeFilterOptions";
 import { useCallbackRef } from "../hooks/useCallbackRef";
+import APIService from "../services";
 
 const loadHash: Record<string, string> = {};
 
@@ -167,49 +163,51 @@ const Node: React.FC<INodeProps> = ({
   //   document.addEventListener("mouseup", handleSocketMouseUp);
   // }
 
-  // createEffect(async function updatePreview() {
-  //   // NOTE: This check to see if we need to reload is actually not going to
-  //   // work because updating nodes will cause complete rerender of the node so
-  //   // this state will be cleared out and useless to check. There are going to
-  //   // be performance issues with this, but it's a necessary evil for now.
-  //   const previewFile = node.preview || null;
-  //   if (previewFile !== previewData.loadedFileName && previewFile) {
-  //     updatePreviewData({ ...previewData, loading: true });
-  //     const cachedData = loadHash[previewFile];
-  //     let previewUrl: string;
-  //     if (cachedData) {
-  //       previewUrl = cachedData;
-  //     } else if (node.type === "output") {
-  //       try {
-  //         const response = await fetch(previewFile);
-  //         const blob = await response.blob();
-  //         const reader = new FileReader();
-  //         previewUrl = await new Promise((resolve) => {
-  //           reader.onloadend = () => resolve(reader.result as string);
-  //           reader.readAsDataURL(blob);
-  //         });
-  //         loadHash[previewFile] = previewUrl;
-  //       } catch (err) {
-  //         console.error("Failed to load preview image:", err);
-  //         throw new Error("Failed to load preview image");
-  //       }
-  //     } else {
-  //       const previewResponse = await APIService.getFilePreview(previewFile);
-  //       if (previewResponse.success) {
-  //         previewUrl = previewResponse.data;
-  //         loadHash[previewFile] = previewUrl;
-  //       } else {
-  //         console.error(previewResponse);
-  //         throw new Error("Failed to load preview image");
-  //       }
-  //     }
-  //     updatePreviewData({
-  //       loading: false,
-  //       loadedFileName: previewFile,
-  //       previewUrl,
-  //     });
-  //   }
-  // });
+  useEffect(function updatePreview() {
+    // NOTE: This check to see if we need to reload is actually not going to
+    // work because updating nodes will cause complete rerender of the node so
+    // this state will be cleared out and useless to check. There are going to
+    // be performance issues with this, but it's a necessary evil for now.
+    (async () => {
+      const previewFile = node.preview || null;
+      if (previewFile !== previewData.loadedFileName && previewFile) {
+        updatePreviewData({ ...previewData, loading: true });
+        const cachedData = loadHash[previewFile];
+        let previewUrl: string;
+        if (cachedData) {
+          previewUrl = cachedData;
+        } else if (node.type === "output") {
+          try {
+            const response = await fetch(previewFile);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            previewUrl = await new Promise((resolve) => {
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.readAsDataURL(blob);
+            });
+            loadHash[previewFile] = previewUrl;
+          } catch (err) {
+            console.error("Failed to load preview image:", err);
+            throw new Error("Failed to load preview image");
+          }
+        } else {
+          const previewResponse = await APIService.getFilePreview(previewFile);
+          if (previewResponse.success) {
+            previewUrl = previewResponse.data;
+            loadHash[previewFile] = previewUrl;
+          } else {
+            console.error(previewResponse);
+            throw new Error("Failed to load preview image");
+          }
+        }
+        updatePreviewData({
+          loading: false,
+          loadedFileName: previewFile,
+          previewUrl,
+        });
+      }
+    })();
+  }, [node.preview, node.type, updatePreviewData]);
 
   const emitContextMenu = (event: ExtendedContextMenuEvent) => {
     // If we ever run into issues where the node isn't being picked up by the
@@ -253,7 +251,7 @@ const Node: React.FC<INodeProps> = ({
           <div
             key={`${node.id}-input-${index}`}
             className={cn(styles.socket, !!nodeInput.connectedNodes.length && styles.connected)}
-            // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
+          // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
           />
         ))}
       </div>
@@ -262,7 +260,7 @@ const Node: React.FC<INodeProps> = ({
           <div
             key={`${node.id}-output-${index}`}
             className={cn(styles.socket, !!nodeOutput.connectedNodes.length && styles.connected)}
-            // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
+          // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
           />
         ))}
       </div>
