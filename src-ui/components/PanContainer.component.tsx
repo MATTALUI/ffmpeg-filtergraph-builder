@@ -51,7 +51,7 @@ const PanContainer: React.FC = () => {
     });
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }, [setMouseIsDown, setMouseDownValues, handleMouseMove, handleMouseUp]);
+  }, [setMouseIsDown, setMouseDownValues, handleMouseMove, handleMouseUp, x, y]);
 
   return (
     <div

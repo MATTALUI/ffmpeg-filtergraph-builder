@@ -21,6 +21,7 @@ import cn from "classnames";
 import { useNodes } from "../context/nodes";
 import { cloneDeep, uniq } from "lodash";
 import NodeFilterOptions from "./NodeFilterOptions";
+import { useCallbackRef } from "../hooks/useCallbackRef";
 
 const loadHash: Record<string, string> = {};
 
@@ -37,7 +38,7 @@ interface IPreviewStore {
 const Node: React.FC<INodeProps> = ({
   node
 }: INodeProps) => {
-  const { allNodesIndexed } = useNodes();
+  const { allNodesIndexed, updateNodes } = useNodes();
   const [active, setActive] = useState(false);
   const [previewData, updatePreviewData] = useState<IPreviewStore>({
     loading: false,
@@ -52,85 +53,85 @@ const Node: React.FC<INodeProps> = ({
   });
   const loading = previewData.loading;
 
-  const handleMouseMove = (event: MouseEvent) => {
+  const handleMouseMove = useCallbackRef((event: MouseEvent) => {
     const initialValues = mouseDownValues;
     const xDiff = initialValues.mouseX - event.clientX
     const yDiff = initialValues.mouseY - event.clientY;
     const x = initialValues.originalX - xDiff;
     const y = initialValues.originalY - yDiff;
-    // updateNodes([{
-    //   id: node.id,
-    //   x,
-    //   y,
-    // }]);
-  }
-
-  const attemptConnection = (event: MouseEvent) => {
-    // I don't like this, but it'll get us there until I can refactor into
-    // something better...
-    if (!node) return;
-    const mouseX = event.clientX;
-    const mouseY = event.clientY;
-    const threshold = 15;
-    let closestDistance = Infinity;
-    let closestSocketEle: HTMLDivElement | null = null;
-    Array.from(document.querySelectorAll<HTMLDivElement>(`.${styles.socket}`)).forEach((socketEle) => {
-      const bounds = socketEle.getBoundingClientRect();
-      const centerX = bounds.x + (bounds.width / 2);
-      const centerY = bounds.y + (bounds.height);
-      const distance = Math.sqrt(
-        Math.pow(Math.abs(mouseX - centerX), 2) +
-        Math.pow(Math.abs(mouseY - centerY), 2)
-      );
-      if (distance < closestDistance) {
-        closestDistance = distance;
-        closestSocketEle = socketEle;
-      }
-    });
-    if (!closestSocketEle || closestDistance > threshold) return;
-    const nodeEle = (closestSocketEle as HTMLDivElement).closest<HTMLDivElement>(`.${styles.node}`);
-    if (!nodeEle) throw new Error("Didn't find socket elements");
-    const nodeId = nodeEle.id.slice("node-".length);
-    const inputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.inputs} > .${styles.socket}`));
-    const outputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.outputs} > .${styles.socket}`));
-    const inputIndex = inputSockets.indexOf(closestSocketEle);
-    const outputIndex = outputSockets.indexOf(closestSocketEle);
-    const updates = []
-    // Update the Target Node
-    const targetSocketIndex = Math.max(inputIndex, outputIndex);
-    const targetSocketType = inputIndex < 0 ? "outputs" : "inputs";
-    const targetNode = allNodesIndexed[nodeId];
-    const updatedTargetSockets = cloneDeep(targetNode[targetSocketType]);
-    updatedTargetSockets[targetSocketIndex].connectedNodes =
-      uniq([...updatedTargetSockets[targetSocketIndex].connectedNodes, node.id]);
-    updates.push({
-      id: targetNode.id,
-      [targetSocketType]: updatedTargetSockets,
-    });
-    // Update the Original Node
-    const outputSocket = node.outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
-    const inputSocket = node.inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
-    const socketType = !!inputSocket ? "inputs" : "outputs";
-    const socketIndex = !!inputSocket
-      ? node.inputs.indexOf(inputSocket)
-      : node.outputs.indexOf(outputSocket!);
-    const updatedSockets = cloneDeep(node[socketType]);
-    updatedSockets[socketIndex].connectedNodes =
-      uniq([...updatedSockets[socketIndex].connectedNodes.filter(id => id !== TEMPSOCKET), targetNode.id]);
-    updates.push({
+    updateNodes([{
       id: node.id,
-      [socketType]: updatedSockets,
-    });
-    // updateNodes(updates);
-  }
+      x,
+      y,
+    }]);
+  })
 
-  const handleMouseUp = (_event: MouseEvent) => {
+  // const attemptConnection = (event: MouseEvent) => {
+  //   // I don't like this, but it'll get us there until I can refactor into
+  //   // something better...
+  //   if (!node) return;
+  //   const mouseX = event.clientX;
+  //   const mouseY = event.clientY;
+  //   const threshold = 15;
+  //   let closestDistance = Infinity;
+  //   let closestSocketEle: HTMLDivElement | null = null;
+  //   Array.from(document.querySelectorAll<HTMLDivElement>(`.${styles.socket}`)).forEach((socketEle) => {
+  //     const bounds = socketEle.getBoundingClientRect();
+  //     const centerX = bounds.x + (bounds.width / 2);
+  //     const centerY = bounds.y + (bounds.height);
+  //     const distance = Math.sqrt(
+  //       Math.pow(Math.abs(mouseX - centerX), 2) +
+  //       Math.pow(Math.abs(mouseY - centerY), 2)
+  //     );
+  //     if (distance < closestDistance) {
+  //       closestDistance = distance;
+  //       closestSocketEle = socketEle;
+  //     }
+  //   });
+  //   if (!closestSocketEle || closestDistance > threshold) return;
+  //   const nodeEle = (closestSocketEle as HTMLDivElement).closest<HTMLDivElement>(`.${styles.node}`);
+  //   if (!nodeEle) throw new Error("Didn't find socket elements");
+  //   const nodeId = nodeEle.id.slice("node-".length);
+  //   const inputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.inputs} > .${styles.socket}`));
+  //   const outputSockets = Array.from(nodeEle.querySelectorAll(`.${styles.outputs} > .${styles.socket}`));
+  //   const inputIndex = inputSockets.indexOf(closestSocketEle);
+  //   const outputIndex = outputSockets.indexOf(closestSocketEle);
+  //   const updates = []
+  //   // Update the Target Node
+  //   const targetSocketIndex = Math.max(inputIndex, outputIndex);
+  //   const targetSocketType = inputIndex < 0 ? "outputs" : "inputs";
+  //   const targetNode = allNodesIndexed[nodeId];
+  //   const updatedTargetSockets = cloneDeep(targetNode[targetSocketType]);
+  //   updatedTargetSockets[targetSocketIndex].connectedNodes =
+  //     uniq([...updatedTargetSockets[targetSocketIndex].connectedNodes, node.id]);
+  //   updates.push({
+  //     id: targetNode.id,
+  //     [targetSocketType]: updatedTargetSockets,
+  //   });
+  //   // Update the Original Node
+  //   const outputSocket = node.outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+  //   const inputSocket = node.inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
+  //   const socketType = !!inputSocket ? "inputs" : "outputs";
+  //   const socketIndex = !!inputSocket
+  //     ? node.inputs.indexOf(inputSocket)
+  //     : node.outputs.indexOf(outputSocket!);
+  //   const updatedSockets = cloneDeep(node[socketType]);
+  //   updatedSockets[socketIndex].connectedNodes =
+  //     uniq([...updatedSockets[socketIndex].connectedNodes.filter(id => id !== TEMPSOCKET), targetNode.id]);
+  //   updates.push({
+  //     id: node.id,
+  //     [socketType]: updatedSockets,
+  //   });
+  //   // updateNodes(updates);
+  // }
+
+  const handleMouseUp = useCallbackRef((_event: MouseEvent) => {
     setActive(false);
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-  }
+  })
 
-  const handleMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
     // event.nativeEvent.stopImmediatePropagation(); // use this if the aboe line doesn't work...
     setMouseDownValues({
@@ -142,29 +143,29 @@ const Node: React.FC<INodeProps> = ({
     setActive(true);
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }
+  }, [setMouseDownValues, setActive, handleMouseMove, handleMouseUp, node.x, node.y]);
 
-  const handleSocketMouseUp = (event: MouseEvent) => {
-    attemptConnection(event);
-    // removeTempConnections(node);
-    document.removeEventListener("mouseup", handleSocketMouseUp);
-  }
+  // const handleSocketMouseUp = (event: MouseEvent) => {
+  //   attemptConnection(event);
+  //   // removeTempConnections(node);
+  //   document.removeEventListener("mouseup", handleSocketMouseUp);
+  // }
 
-  const handleSocketMouseDown = (
-    event: React.MouseEvent<HTMLDivElement>,
-    socketType: "inputs" | "outputs",
-    index: number,
-  ) => {
-    event.stopPropagation();
-    event.preventDefault();
-    const newSockets = cloneDeep(node[socketType]);
-    newSockets[index].connectedNodes.push(TEMPSOCKET);
-    // updateNodes([{
-    //   id: node.id,
-    //   [socketType]: newSockets,
-    // }]);
-    document.addEventListener("mouseup", handleSocketMouseUp);
-  }
+  // const handleSocketMouseDown = (
+  //   event: React.MouseEvent<HTMLDivElement>,
+  //   socketType: "inputs" | "outputs",
+  //   index: number,
+  // ) => {
+  //   event.stopPropagation();
+  //   event.preventDefault();
+  //   const newSockets = cloneDeep(node[socketType]);
+  //   newSockets[index].connectedNodes.push(TEMPSOCKET);
+  //   // updateNodes([{
+  //   //   id: node.id,
+  //   //   [socketType]: newSockets,
+  //   // }]);
+  //   document.addEventListener("mouseup", handleSocketMouseUp);
+  // }
 
   // createEffect(async function updatePreview() {
   //   // NOTE: This check to see if we need to reload is actually not going to
@@ -252,7 +253,7 @@ const Node: React.FC<INodeProps> = ({
           <div
             key={`${node.id}-input-${index}`}
             className={cn(styles.socket, !!nodeInput.connectedNodes.length && styles.connected)}
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
+            // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
           />
         ))}
       </div>
@@ -261,7 +262,7 @@ const Node: React.FC<INodeProps> = ({
           <div
             key={`${node.id}-output-${index}`}
             className={cn(styles.socket, !!nodeOutput.connectedNodes.length && styles.connected)}
-            onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
+            // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
           />
         ))}
       </div>
