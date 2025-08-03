@@ -1,14 +1,19 @@
-import React, { useState, useCallback, useEffect, MouseEventHandler } from "react"
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+} from "react"
 import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
 import { open as openFiles, save as saveFile } from '@tauri-apps/plugin-dialog';
 import type { ExtendedContextMenuEvent, InputNode, Node, OutputNode } from "../types";
-import { useCallbackRef } from "../hooks/useCallbackRef";
+// import { useCallbackRef } from "../hooks/useCallbackRef";
 import FilterSelector from "./FilterSelector.component";
 import { useNodes } from "../context/nodes";
-// import { workspaceMouseCoords } from "../signals/ui";
+import { useUI } from "../context/ui";
 
 const ContextMenu: React.FC = () => {
+  const { workspaceMouseCoords } = useUI();
   const { addNodes, removeNodes } = useNodes();
   const [isOpen, setIsOpen] = useState(false);
   const [anchor, setAnchor] = useState({ x: 0, y: 0 });
@@ -33,7 +38,7 @@ const ContextMenu: React.FC = () => {
 
   const addMediaInputs = useCallback(async () => {
     const files = await openFiles({ multiple: true, directory: false }) || [];
-    const { x: mouseX, y: mouseY } = { x: 0, y: 0 }; // workspaceMouseCoords();
+    const { x: mouseX, y: mouseY } = workspaceMouseCoords;
     const offsetSize = 25;
     files.forEach((filePath, index) => {
       const pathSegs = filePath.split("/")
@@ -57,7 +62,7 @@ const ContextMenu: React.FC = () => {
     const filePath = await saveFile();
     if (!filePath) return;
     console.log(filePath);
-    const { x, y } = { x: 0, y: 0 }; // workspaceMouseCoords();
+    const { x, y } = workspaceMouseCoords;
     const name = filePath.split("/").pop() || "output";
     const newNode: OutputNode = {
       type: "output",

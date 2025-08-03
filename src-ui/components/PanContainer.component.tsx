@@ -11,8 +11,10 @@ import ConnectionManager from "./ConnectionManager.component";
 import { useCallbackRef } from "../hooks/useCallbackRef";
 import Node from "./Node.component";
 import { useNodes } from "../context/nodes";
+import { useUI } from "../context/ui";
 
 const PanContainer: React.FC = () => {
+  const { panScreenRef } = useUI();
   const { allNodes } = useNodes();
   const [mouseDownValues, setMouseDownValues] = useState<MouseDownValues>({
     mouseX: 0,
@@ -62,7 +64,7 @@ const PanContainer: React.FC = () => {
       onMouseDown={handleMouseDown}
     >
       <div
-        id="pan-screen"
+        ref={panScreenRef}
         className={styles.pannable}
         style={{
           left: `${x}px`,
