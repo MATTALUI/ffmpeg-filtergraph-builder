@@ -7,11 +7,13 @@ import React, {
   useState,
 } from "react";
 import { useCallbackRef } from "../hooks/useCallbackRef";
+import type { Node } from "../types";
 
 type UIContext = {
   mouseCoords: { x: number, y: number };
   workspaceMouseCoords: { x: number, y: number };
   panScreenRef: React.RefObject<HTMLDivElement | null>;
+  nodeEleRefs: React.RefObject<Record<Node["id"], HTMLDivElement>>;
 };
 
 
@@ -19,6 +21,7 @@ const defaultContext: UIContext = {
   mouseCoords: { x: 0, y: 0 },
   workspaceMouseCoords: { x: 0, y: 0 },
   panScreenRef: { current: null },
+  nodeEleRefs: { current: {} },
 };
 
 const Context = createContext<UIContext>(defaultContext);
@@ -31,6 +34,7 @@ export const UIContextProvider: React.FC<{ children: React.ReactNode }> = (
   const [mouseCoords, setMouseCoords] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const [workspaceMouseCoords, setWorkspaceMouseCoords] = useState<{ x: number, y: number }>({ x: 0, y: 0 });
   const panScreenRef = useRef<HTMLDivElement | null>(null);
+  const nodeEleRefs = useRef<Record<Node["id"], HTMLDivElement>>({});
 
   const handleMouseMove = useCallbackRef((event: MouseEvent) => {
     const mouseX = event.clientX;
@@ -61,7 +65,13 @@ export const UIContextProvider: React.FC<{ children: React.ReactNode }> = (
     mouseCoords,
     workspaceMouseCoords,
     panScreenRef,
-  }), [mouseCoords, workspaceMouseCoords, panScreenRef]);
+    nodeEleRefs,
+  }), [
+    mouseCoords,
+    workspaceMouseCoords,
+    panScreenRef,
+    nodeEleRefs,
+  ]);
 
   return <Context.Provider value={value}>{props.children}</Context.Provider>;
 };

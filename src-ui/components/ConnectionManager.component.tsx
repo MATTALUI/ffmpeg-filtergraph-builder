@@ -1,15 +1,8 @@
-// import {
-//   For,
-//   createMemo,
-//   createSignal,
-//   onMount,
-//   type Component,
-// } from "solid-js";
 import React, { useState, useCallback, useEffect, useMemo } from "react"
 import { TEMPSOCKET } from "../constants";
 import type { Node } from "../types";
-// import { allNodes } from "../signals/nodes";
-// import { workspaceMouseCoords } from "../signals/ui";
+import { useNodes } from "../context/nodes";
+import { useUI } from "../context/ui";
 
 type ConnectionSummary = {
   x: number;
@@ -21,12 +14,12 @@ type ConnectionSummary = {
 };
 
 const ConnectionManager: React.FC = () => {
-  const allNodes: Record<string, Node> = {};
+  const { allNodesIndexed } = useNodes();
+  const { nodeEleRefs, workspaceMouseCoords } = useUI();
   const [hasRendered, setHasRendered] = useState(false);
   useEffect(() => {
     setHasRendered(true);
   }, [setHasRendered]);
-  // onMount(() => setHasRendered(true));
 
   const buildNodeConnectionSummary = (
     outputNode: Node,
@@ -38,8 +31,8 @@ const ConnectionManager: React.FC = () => {
     const inputSocket = inputNode.inputs.find(i => i.connectedNodes.includes(outputNode.id));
     if (!inputSocket) throw new Error("Could not find connection in input");
     const inputSocketIndex = inputNode.inputs.indexOf(inputSocket);
-    const outputEle = document.querySelector(`#node-${outputNode.id}`);
-    const inputEle = document.querySelector(`#node-${inputNode.id}`);
+    const outputEle = nodeEleRefs.current[outputNode.id];
+    const inputEle = nodeEleRefs.current[inputNode.id];
     if (!outputEle || !inputEle) throw new Error("Didn't find socket elements");
     const outputBounds = outputEle.getBoundingClientRect();
     const inputBounds = inputEle.getBoundingClientRect();
@@ -81,14 +74,14 @@ const ConnectionManager: React.FC = () => {
     };
   }
 
-  const buildTempNode = (node: Node): ConnectionSummary => {
+  const buildTempNode = useCallback((node: Node): ConnectionSummary => {
     const outputSocket = node.outputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
     const inputSocket = node.inputs.find(s => s.connectedNodes.includes(TEMPSOCKET));
     const socketType = !!inputSocket ? "inputs" : "outputs";
     const socketIndex = !!inputSocket
       ? node.inputs.indexOf(inputSocket)
       : node.outputs.indexOf(outputSocket!);
-    const nodeEle = document.querySelector(`#node-${node.id}`);
+    const nodeEle = nodeEleRefs.current[node.id];
     if (!nodeEle) throw new Error("Didn't find socket elements");
     const nodeBounds = nodeEle.getBoundingClientRect();
     const nodeX = socketType === "outputs" ? node.x + nodeBounds.width : node.x;
@@ -96,7 +89,7 @@ const ConnectionManager: React.FC = () => {
     const socketYOffset =
       (segmentSize * socketIndex - 1) + (segmentSize / 2);
     const nodeY = node.y + socketYOffset;
-    const { x: mouseX, y: mouseY } = { x: 0, y: 0 }; // workspaceMouseCoords();
+    const { x: mouseX, y: mouseY } = workspaceMouseCoords;
 
     const padding = 10;
     const x = Math.min(nodeX, mouseX) - padding;
@@ -117,12 +110,12 @@ const ConnectionManager: React.FC = () => {
     return {
       x, y, width, height, pathStrokeWidth, pathD,
     }
-  }
+  }, [nodeEleRefs, workspaceMouseCoords]);
 
   const connections = useMemo(() => {
     if (!hasRendered) return [];
     const connections: Record<string, ConnectionSummary> = {};
-    Object.values(allNodes).forEach((node) => {
+    Object.values(allNodesIndexed).forEach((node) => {
       node.inputs.forEach((nodeConnection) => {
         nodeConnection.connectedNodes.forEach((node2Id) => {
           const key = [node.id, node2Id].sort().join("-");
@@ -130,7 +123,7 @@ const ConnectionManager: React.FC = () => {
           if (node2Id === TEMPSOCKET)
             connections[key] = buildTempNode(node);
           else
-            connections[key] = buildNodeConnectionSummary(allNodes[node2Id], node);
+            connections[key] = buildNodeConnectionSummary(allNodesIndexed[node2Id], node);
         });
       });
       node.outputs.forEach((nodeConnection) => {
@@ -140,13 +133,18 @@ const ConnectionManager: React.FC = () => {
           if (node2Id === TEMPSOCKET)
             connections[key] = buildTempNode(node);
           else
-            connections[key] = buildNodeConnectionSummary(node, allNodes[node2Id]);
+            connections[key] = buildNodeConnectionSummary(node, allNodesIndexed[node2Id]);
         });
       });
     });
 
     return Object.values(connections);
-  }, []);
+  }, [
+    hasRendered,
+    allNodesIndexed,
+    buildNodeConnectionSummary,
+    buildTempNode,
+  ]);
 
   return (
     <div>
@@ -164,7 +162,7 @@ const ConnectionManager: React.FC = () => {
           <path
             d={connection.pathD}
             stroke="black"
-            stroke-width={`${connection.pathStrokeWidth}px`}
+            strokeWidth={`${connection.pathStrokeWidth}px`}
             fill="transparent"
           />
         </svg>

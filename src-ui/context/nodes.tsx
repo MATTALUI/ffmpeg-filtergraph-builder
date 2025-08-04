@@ -28,17 +28,7 @@ export const useNodes: () => NodesContext = () => useContext(Context);
 export const NodesContextProvider: React.FC<{ children: React.ReactNode }> = (
   props: { children: React.ReactNode }
 ) => {
-  const [nodes, setNodes] = useState<Record<Node["id"], Node>>({
-    "0": {
-      id: "0",
-      type: "input",
-      x: 300,
-      y: 300,
-      name: "Test",
-      inputs: [],
-      outputs: [],
-    },
-  });
+  const [nodes, setNodes] = useState<Record<Node["id"], Node>>({});
   const allNodes = useMemo(() => Object.values(nodes), [nodes]);
 
   const getNode = useCallback((id: Node["id"]) => nodes[id] || null, [nodes])

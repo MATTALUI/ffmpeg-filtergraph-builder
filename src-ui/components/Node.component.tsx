@@ -3,6 +3,7 @@ import React, {
   useCallback,
   type MouseEventHandler,
   useEffect,
+  useMemo,
 } from "react"
 import type {
   ExtendedContextMenuEvent,
@@ -18,6 +19,7 @@ import { cloneDeep, uniq } from "lodash";
 import NodeFilterOptions from "./NodeFilterOptions";
 import { useCallbackRef } from "../hooks/useCallbackRef";
 import APIService from "../services";
+import { useUI } from "../context/ui";
 
 const loadHash: Record<string, string> = {};
 
@@ -35,6 +37,7 @@ const Node: React.FC<INodeProps> = ({
   node
 }: INodeProps) => {
   const { allNodesIndexed, updateNodes } = useNodes();
+  const { nodeEleRefs } = useUI();
   const [active, setActive] = useState(false);
   const [previewData, updatePreviewData] = useState<IPreviewStore>({
     loading: false,
@@ -129,7 +132,6 @@ const Node: React.FC<INodeProps> = ({
 
   const handleMouseDown = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.stopPropagation();
-    // event.nativeEvent.stopImmediatePropagation(); // use this if the aboe line doesn't work...
     setMouseDownValues({
       mouseX: event.clientX,
       mouseY: event.clientY,
@@ -141,27 +143,39 @@ const Node: React.FC<INodeProps> = ({
     document.addEventListener("mouseup", handleMouseUp);
   }, [setMouseDownValues, setActive, handleMouseMove, handleMouseUp, node.x, node.y]);
 
-  // const handleSocketMouseUp = (event: MouseEvent) => {
-  //   attemptConnection(event);
-  //   // removeTempConnections(node);
-  //   document.removeEventListener("mouseup", handleSocketMouseUp);
-  // }
+  const removeTempConnections = useCallback(() => {
+    const inputs = cloneDeep(node.inputs)
+    const outputs = cloneDeep(node.outputs)
+    inputs.forEach((i) => i.connectedNodes = i.connectedNodes.filter((id) => id !== TEMPSOCKET));
+    outputs.forEach((o) => o.connectedNodes = o.connectedNodes.filter((id) => id !== TEMPSOCKET));
+    updateNodes([{
+      id: node.id,
+      inputs,
+      outputs,
+    }]);
+  }, [updateNodes, node]);
 
-  // const handleSocketMouseDown = (
-  //   event: React.MouseEvent<HTMLDivElement>,
-  //   socketType: "inputs" | "outputs",
-  //   index: number,
-  // ) => {
-  //   event.stopPropagation();
-  //   event.preventDefault();
-  //   const newSockets = cloneDeep(node[socketType]);
-  //   newSockets[index].connectedNodes.push(TEMPSOCKET);
-  //   // updateNodes([{
-  //   //   id: node.id,
-  //   //   [socketType]: newSockets,
-  //   // }]);
-  //   document.addEventListener("mouseup", handleSocketMouseUp);
-  // }
+  const handleSocketMouseUp = useCallbackRef((event: MouseEvent) => {
+    // attemptConnection(event);
+    removeTempConnections();
+    document.removeEventListener("mouseup", handleSocketMouseUp);
+  })
+
+  const handleSocketMouseDown = useCallback((
+    event: React.MouseEvent<HTMLDivElement>,
+    socketType: "inputs" | "outputs",
+    index: number,
+  ) => {
+    event.stopPropagation();
+    event.preventDefault();
+    const newSockets = cloneDeep(node[socketType]);
+    newSockets[index].connectedNodes.push(TEMPSOCKET);
+    updateNodes([{
+      id: node.id,
+      [socketType]: newSockets,
+    }]);
+    document.addEventListener("mouseup", handleSocketMouseUp);
+  }, [node, updateNodes, handleSocketMouseUp]);
 
   useEffect(function updatePreview() {
     // NOTE: This check to see if we need to reload is actually not going to
@@ -217,14 +231,25 @@ const Node: React.FC<INodeProps> = ({
     event.nativeEvent.node = node;
   }
 
+  const setNodeEleRef = useCallback((ele: HTMLDivElement) => {
+    if (!ele) return;
+    nodeEleRefs.current[node.id] = ele;
+  }, [node.id, nodeEleRefs]);
+
+  useEffect(() => () => {
+    delete nodeEleRefs.current[node.id];
+  }, [node.id]);
+
+  const nodeStyles = useMemo(() => ({
+    left: `${node.x}px`,
+    top: `${node.y}px`,
+  }), [node.x, node.y]);
+
   return (
     <div
-      id={`node-${node.id}`}
+      ref={setNodeEleRef}
       className={cn(styles.node, active && styles.active)}
-      style={{
-        left: `${node.x}px`,
-        top: `${node.y}px`,
-      }}
+      style={nodeStyles}
       onMouseDown={handleMouseDown}
       onContextMenu={emitContextMenu as unknown as MouseEventHandler<HTMLDivElement>}
     >
@@ -251,7 +276,7 @@ const Node: React.FC<INodeProps> = ({
           <div
             key={`${node.id}-input-${index}`}
             className={cn(styles.socket, !!nodeInput.connectedNodes.length && styles.connected)}
-          // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
+          onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "inputs", index)}
           />
         ))}
       </div>
@@ -260,7 +285,7 @@ const Node: React.FC<INodeProps> = ({
           <div
             key={`${node.id}-output-${index}`}
             className={cn(styles.socket, !!nodeOutput.connectedNodes.length && styles.connected)}
-          // onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
+          onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => handleSocketMouseDown(e, "outputs", index)}
           />
         ))}
       </div>
