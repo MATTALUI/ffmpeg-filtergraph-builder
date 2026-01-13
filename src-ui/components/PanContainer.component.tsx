@@ -1,76 +1,79 @@
-import {
-  type Component,
-  createSignal,
-  For,
-} from "solid-js";
+import React, {
+  useState,
+  useCallback,
+} from "react"
 import type {
   MouseDownValues,
 } from "../types";
-import Node from "./Node.component";
 import cn from "classnames";
 import styles from "./PanContainer.module.scss";
-import { allNodes } from "../signals/nodes";
 import ConnectionManager from "./ConnectionManager.component";
+import { useCallbackRef } from "../hooks/useCallbackRef";
+import Node from "./Node.component";
+import { useNodes } from "../context/nodes";
+import { useUI } from "../context/ui";
 
-const PanContainer: Component = () => {
-  const [mouseDownValues, setMouseDownValues] = createSignal<MouseDownValues>({
+const PanContainer: React.FC = () => {
+  const { panScreenRef } = useUI();
+  const { allNodes } = useNodes();
+  const [mouseDownValues, setMouseDownValues] = useState<MouseDownValues>({
     mouseX: 0,
     mouseY: 0,
     originalX: 0,
     originalY: 0,
   });
-  const [x, setX] = createSignal(0);
-  const [y, setY] = createSignal(0);
-  const [mouseIsDown, setMouseIsDown] = createSignal(false);
+  const [x, setX] = useState(0);
+  const [y, setY] = useState(0);
+  const [mouseIsDown, setMouseIsDown] = useState(false);
 
-  const handleMouseMove = (event: MouseEvent) => {
-    const initialValues = mouseDownValues();
+  const handleMouseMove = useCallbackRef((event: MouseEvent) => {
+    const initialValues = { ...mouseDownValues };
     const xDiff = initialValues.mouseX - event.clientX
     const yDiff = initialValues.mouseY - event.clientY;
     const newX = initialValues.originalX - xDiff;
     const newY = initialValues.originalY - yDiff;
     setX(newX);
     setY(newY);
-  }
+  });
 
-  const handleMouseUp = (_event: MouseEvent) => {
+  const handleMouseUp = useCallbackRef((_event: MouseEvent) => {
     setMouseIsDown(false);
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-  }
+  })
 
-  const handleMouseDown = (event: MouseEvent) => {
+  const handleMouseDown = useCallback((event: React.MouseEvent) => {
     if (event.button === 2) return;
     setMouseIsDown(true);
     setMouseDownValues({
       mouseX: event.clientX,
       mouseY: event.clientY,
-      originalX: x(),
-      originalY: y(),
+      originalX: x,
+      originalY: y,
     });
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
-  }
+  }, [setMouseIsDown, setMouseDownValues, handleMouseMove, handleMouseUp, x, y]);
 
   return (
     <div
-      class={cn(
+      className={cn(
         styles.panContainer,
-        mouseIsDown() && styles.grabbed,
+        mouseIsDown && styles.grabbed,
       )}
       onMouseDown={handleMouseDown}
     >
       <div
-        id="pan-screen"
-        class={styles.pannable}
+        ref={panScreenRef}
+        className={styles.pannable}
         style={{
-          left: `${x()}px`,
-          top: `${y()}px`,
+          left: `${x}px`,
+          top: `${y}px`,
         }}
       >
-        <For each={Object.values(allNodes)}>
-          {(node) => (<Node node={node} />)}
-        </For>
+        {Object.values(allNodes).map((node) => (
+          <Node key={node.id} node={node} />
+        ))}
         <ConnectionManager />
       </div>
     </div>

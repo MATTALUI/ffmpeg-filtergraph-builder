@@ -1,43 +1,44 @@
-import {
-  type Component,
-  Show,
-  createSignal,
-  onCleanup,
-  onMount,
-} from "solid-js";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+} from "react"
 import styles from "./ContextMenu.module.scss";
 import cn from "classnames";
-import FilterSelector from "./FilterSelector.component";
 import { open as openFiles, save as saveFile } from '@tauri-apps/plugin-dialog';
 import type { ExtendedContextMenuEvent, InputNode, Node, OutputNode } from "../types";
-import { addNode, removeNode } from "../signals/nodes";
-import { workspaceMouseCoords } from "../signals/ui";
+// import { useCallbackRef } from "../hooks/useCallbackRef";
+import FilterSelector from "./FilterSelector.component";
+import { useNodes } from "../context/nodes";
+import { useUI } from "../context/ui";
 
-const ContextMenu: Component = () => {
-  const [isOpen, setIsOpen] = createSignal(false);
-  const [anchor, setAnchor] = createSignal({ x: 0, y: 0 });
-  const [contextNode, setContextNode] = createSignal<Node | null>(null);
+const ContextMenu: React.FC = () => {
+  const { workspaceMouseCoords } = useUI();
+  const { addNodes, removeNodes } = useNodes();
+  const [isOpen, setIsOpen] = useState(false);
+  const [anchor, setAnchor] = useState({ x: 0, y: 0 });
+  const [contextNode, setContextNode] = useState<Node | null>(null);
 
   const close = () => setIsOpen(false);
   const open = () => setIsOpen(true);
 
-  const handleContextMenu = (event: ExtendedContextMenuEvent) => {
+  const handleContextMenu = useCallback((event: ExtendedContextMenuEvent<Document, React.MouseEvent>) => {
     if (event.ctrlKey) return;
     event.preventDefault();
     event.stopPropagation();
     setAnchor({ x: event.clientX, y: event.clientY });
     setContextNode(event.node || null);
     open();
-  }
+  }, [setAnchor, setContextNode, open]);
 
-  const stopProp = (event: MouseEvent) => {
+  const stopProp = useCallback((event: React.MouseEvent) => {
     event.stopPropagation();
     event.preventDefault();
-  };
+  }, []);
 
-  const addMediaInputs = async () => {
+  const addMediaInputs = useCallback(async () => {
     const files = await openFiles({ multiple: true, directory: false }) || [];
-    const { x: mouseX, y: mouseY } = workspaceMouseCoords();
+    const { x: mouseX, y: mouseY } = workspaceMouseCoords;
     const offsetSize = 25;
     files.forEach((filePath, index) => {
       const pathSegs = filePath.split("/")
@@ -52,16 +53,16 @@ const ContextMenu: Component = () => {
         outputs: [{ type: "video", connectedNodes: [], name: "default" }],
         preview: filePath,
       };
-      addNode(newNode);
+      addNodes([newNode]);
     });
     close();
-  }
+  }, [close, addNodes]);
 
-  const addOutputFile = async () => {
+  const addOutputFile = useCallback(async () => {
     const filePath = await saveFile();
     if (!filePath) return;
     console.log(filePath);
-    const { x, y } = workspaceMouseCoords();
+    const { x, y } = workspaceMouseCoords;
     const name = filePath.split("/").pop() || "output";
     const newNode: OutputNode = {
       type: "output",
@@ -73,101 +74,101 @@ const ContextMenu: Component = () => {
       outputs: [],
       preview: "/icon.png",
     }
-    addNode(newNode);
+    addNodes([newNode]);
     close();
-  }
+  }, [close, addNodes]);
 
-  const deleteNode = () => {
-    const node = contextNode();
-    if (!node) return;
-    removeNode(node.id);
+  const deleteNode = useCallback(() => {
+    if (!contextNode) return;
+    removeNodes([contextNode.id]);
     close();
-  }
+  }, [close, removeNodes, contextNode?.id]);
 
-  onMount(() => {
+  useEffect(() => {
     document.addEventListener("contextmenu", handleContextMenu);
-  });
-
-  onCleanup(() => {
-    document.removeEventListener("contextmenu", handleContextMenu);
-  });
+    return () => {
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [handleContextMenu]);
 
   return (
-    <Show when={isOpen()}>
-      <div
-        class={styles.backdrop}
-        onClick={close}
-      >
+    <>
+      {isOpen && (
         <div
-          class={styles.menuContainer}
-          onClick={stopProp}
-          style={{
-            top: `${anchor().y}px`,
-            left: `${anchor().x}px`,
-          }}
+          className={styles.backdrop}
+          onClick={close}
         >
-          <div class={cn(styles.menuOption, styles.disabled)}>
-            Save
-          </div>
           <div
-            class={styles.menuOption}
-            onClick={addMediaInputs}
+            className={styles.menuContainer}
+            onClick={stopProp}
+            style={{
+              top: `${anchor.y}px`,
+              left: `${anchor.x}px`,
+            }}
           >
-            {/* This will need some updates to support a web service */}
-            Add Input File...
-          </div>
-          <div
-            class={styles.menuOption}
-            onClick={addOutputFile}
-          >
-            {/* This will need some updates to support a web service */}
-            Add Output File...
-          </div>
-          <div class={styles.menuOption}>
-            Add Filter...
-            <div class={styles.subMenu}>
-              <FilterSelector
-                closeMenu={close}
-              />
+            <div className={cn(styles.menuOption, styles.disabled)}>
+              Save
             </div>
-          </div>
-          <Show when={contextNode()}>
             <div
-              class={styles.menuOption}
-              onClick={deleteNode}
+              className={styles.menuOption}
+              onClick={addMediaInputs}
             >
-              Delete Node
+              {/* This will need some updates to support a web service */}
+              Add Input File...
             </div>
-          </Show>
-          {/* <div class={cn(styles.menuOption, styles.disabled)}>
-            Delete the World
-            <div class={styles.subMenu}>
-              Do it!
+            <div
+              className={styles.menuOption}
+              onClick={addOutputFile}
+            >
+              {/* This will need some updates to support a web service */}
+              Add Output File...
             </div>
-          </div> */}
-          {/* <div class={cn(styles.menuOption)}>
-            Sub Menu Test
-            <div class={styles.subMenu}>
-              <div class={cn(styles.menuOption)}>
-                1
-              </div>
-              <div class={cn(styles.menuOption)}>
-                2
-                <div class={styles.subMenu}>
-                  Three deep?
-                </div>
-              </div>
-              <div class={cn(styles.menuOption)}>
-                2
-              </div>
-              <div class={cn(styles.menuOption)}>
-                3
+            <div className={styles.menuOption}>
+              Add Filter...
+              <div className={styles.subMenu}>
+                <FilterSelector
+                  closeMenu={close}
+                />
               </div>
             </div>
-          </div> */}
+            {!!contextNode && (
+              <div
+                className={styles.menuOption}
+                onClick={deleteNode}
+              >
+                Delete Node
+              </div>
+            )}
+            {/* <div className={cn(styles.menuOption, styles.disabled)}>
+          Delete the World
+          <div className={styles.subMenu}>
+            Do it!
+          </div>
+        </div> */}
+            {/* <div className={cn(styles.menuOption)}>
+          Sub Menu Test
+          <div className={styles.subMenu}>
+            <div className={cn(styles.menuOption)}>
+              1
+            </div>
+            <div className={cn(styles.menuOption)}>
+              2
+              <div className={styles.subMenu}>
+                Three deep?
+              </div>
+            </div>
+            <div className={cn(styles.menuOption)}>
+              2
+            </div>
+            <div className={cn(styles.menuOption)}>
+              3
+            </div>
+          </div>
+        </div> */}
+          </div>
         </div>
-      </div>
-    </Show>
+      )}
+    </>
   )
 }
 

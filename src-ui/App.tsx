@@ -1,25 +1,25 @@
-import Toolbar from "./components/Toolbar.component";
-import "./App.css";
-import PanContainer from "./components/PanContainer.component";
-import ContextMenu from "./components/ContextMenu.component";
-import { onCleanup, onMount } from "solid-js";
-import { watchMouse } from "./signals/ui";
+import './App.css'
+import ContextMenu from './components/ContextMenu.component'
+import PanContainer from './components/PanContainer.component'
+import Toolbar from './components/Toolbar.component'
+import { NodesContextProvider } from './context/nodes'
+import { UIContextProvider } from './context/ui'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient();
 
 function App() {
-  onMount(() => {
-    document.addEventListener("mousemove", watchMouse);
-  });
-  onCleanup(() => {
-    document.removeEventListener("mousemove", watchMouse);
-  });
-
   return (
-    <>
-      <ContextMenu />
-      <Toolbar />
-      <PanContainer />
-    </>
-  );
+    <QueryClientProvider client={queryClient}>
+      <UIContextProvider>
+        <NodesContextProvider>
+          <ContextMenu />
+          <Toolbar />
+          <PanContainer />
+        </NodesContextProvider>
+      </UIContextProvider>
+    </QueryClientProvider>
+  )
 }
 
-export default App;
+export default App

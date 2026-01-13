@@ -1,68 +1,60 @@
-import { Component, createSignal, For, Show } from "solid-js";
+import React, { useState } from "react";
 import type { FilterNode } from "../types";
 import nodeStyles from "./Node.module.scss";
 import styles from "./NodeFilterOptions.module.scss";
-import { AiOutlineMinus, AiOutlinePlus } from "solid-icons/ai";
+// import { AiOutlineMinus, AiOutlinePlus } from "solid-icons/ai";
 import cn from "classnames";
 
 export interface INodeFilterOptionsProps {
   node: FilterNode;
 }
 
-const NodeFilterOptions: Component<INodeFilterOptionsProps> = (
+const NodeFilterOptions: React.FC<INodeFilterOptionsProps> = (
   props: INodeFilterOptionsProps
 ) => {
   if (props.node.type !== "filter") return null;
 
-  const [collapsed, setCollapsed] = createSignal(true);
-  const stopProp = (event: MouseEvent) => event.stopPropagation();
-  const toggleCollapsed = () => setCollapsed(!collapsed());
+  const [collapsed, setCollapsed] = useState(true);
+  const stopProp = (event: React.MouseEvent) => event.stopPropagation();
+  const toggleCollapsed = () => setCollapsed(!collapsed);
 
   return (
-    <div class={nodeStyles.section}>
+    <div className={nodeStyles.section}>
       <div
-        onmousedown={stopProp}
+        onMouseDown={stopProp}
         onClick={toggleCollapsed}
-        class={nodeStyles.sectionHeader}
+        className={nodeStyles.sectionHeader}
       >
         <span>Options ({props.node.filter.options.length})</span>
-        <Show when={collapsed()}>
-          <AiOutlinePlus />
-        </Show>
-        <Show when={!collapsed()}>
-          <AiOutlineMinus />
-        </Show>
+        {collapsed ? "+" : "-"}
       </div>
-      <Show when={!collapsed()}>
-        <div class={cn(nodeStyles.sectionContent, styles.options)}>
-          <For each={props.node.filter.options}>
-            {(option) => (
-              <>
-                <span>{option.name}</span>
-                <Show when={!option.values.length}>
-                  <input type="text" value={option.value} />
-                </Show>
-                <Show when={!!option.values.length}>
-                  <select
-                    value={option.values.find(v => v.name === option.value || v.value === option.value)?.value}
-                    onmousedown={stopProp}
-                  >
-                    <For each={option.values}>
-                      {(value) => (
-                        <option
-                          value={value.value}
-                        >
-                          {value.name}
-                        </option>
-                      )}
-                    </For>
-                  </select>
-                </Show>
-              </>
-            )}
-          </For>
+      {!collapsed && (
+        <div className={cn(nodeStyles.sectionContent, styles.options)}>
+          {props.node.filter.options.map((option, index) => (
+            <React.Fragment key={option.name + index}>
+              <span>{option.name}</span>
+              {!!option.values.length ? (
+                <select
+                  value={option.values.find(v => v.name === option.value || v.value === option.value)?.value}
+                  onMouseDown={stopProp}
+                >
+                  {option.values.map((value) => (
+                    <option
+                      key={value.value}
+                      value={value.value}
+                      
+                    >
+                      {value.name}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input type="text" value={option.value} readOnly/>
+              )}
+            </React.Fragment>
+          ))}
         </div>
-      </Show>
+      )}
     </div>
   );
 };

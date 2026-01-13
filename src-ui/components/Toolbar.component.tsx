@@ -1,9 +1,9 @@
-import type { Component } from "solid-js";
+import React from "react";
 import styles from "./Toolbar.module.scss";
 
-const Toolbar: Component = () => {
+const Toolbar: React.FC = () => {
   return (
-    <div class={styles.toolbar}>
+    <div className={styles.toolbar}>
     </div>
   );
 }
